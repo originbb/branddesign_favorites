@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Category } from "@/lib/types";
@@ -13,11 +13,14 @@ export function SortableCategoryChip({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(category.name);
+  const committedRef = useRef(false);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: `cat-${category.id}` });
 
   function commitRename() {
+    if (committedRef.current) return;
+    committedRef.current = true;
     setEditing(false);
     onRename(category.id, draft);
   }
@@ -68,7 +71,7 @@ export function SortableCategoryChip({
         />
       ) : (
         <span
-          onDoubleClick={() => { setDraft(category.name); setEditing(true); }}
+          onDoubleClick={() => { committedRef.current = false; setDraft(category.name); setEditing(true); }}
           style={{ cursor: "text" }}
         >
           {category.name}
