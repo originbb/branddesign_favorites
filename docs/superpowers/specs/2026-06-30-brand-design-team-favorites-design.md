@@ -62,7 +62,7 @@ bookmarks
   - description       # 한 줄 설명 (선택)
   - favicon_url        # 자동 수집, 실패 시 기본 아이콘
   - category_id (FK -> categories.id)
-  - sort_order        # 카테고리 내 카드 순서
+  - sort_order        # 카드 전역 정렬 순서(관리 그리드는 평면 — 전체 기준 한 순서, 각 카테고리 탭은 이 순서의 부분집합으로 표시)
   - created_at
 ```
 
