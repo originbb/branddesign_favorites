@@ -384,7 +384,7 @@ export function middleware(request: NextRequest) {
     response.cookies.set(ADMIN_COOKIE, key, {
       httpOnly: true,
       sameSite: "lax",
-      secure: true,
+      secure: process.env.NODE_ENV === "production", // 로컬(http) 개발에선 false라야 쿠키가 저장됨
       path: "/",
       maxAge: 60 * 60 * 24 * 365, // 1년 유지
     });
