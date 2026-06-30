@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:ai-semina-ap4u.onrender.com)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'Add design doc for 브랜드전략디자인팀의 즐겨찾기 *)",
+      "Bash(git commit -q -m 'Add implementation plan for 브랜드전략디자인팀의 즐겨찾기 *)",
+      "Bash(git commit -q -m 'Add category drag-reorder UI to phase 1 scope *)",
+      "Bash(cd /Users/bw.seo/workspaces/branddesign_favorites *)",
+      "Bash(git checkout *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(npm test *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
