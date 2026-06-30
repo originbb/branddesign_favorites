@@ -1,0 +1,8 @@
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tab {
+  padding: 8px 16px; border-radius: 980px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-dim); font-size: 14px;
+  transition: all 0.15s ease;
+}
+.tab:hover { color: var(--text); }
+.active { background: var(--accent); color: #fff; border-color: transparent; }

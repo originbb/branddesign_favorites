@@ -1,0 +1,28 @@
+.card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
+}
+.favicon {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  background: var(--bg);
+}
+.body { min-width: 0; }
+.title {
+  font-size: 15px; font-weight: 600; margin: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.desc {
+  font-size: 13px; color: var(--text-dim); margin: 2px 0 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}

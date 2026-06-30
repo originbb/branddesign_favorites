@@ -1,0 +1,14 @@
+.page { max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
+.header { margin-bottom: 32px; }
+.h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 24px; }
+.controls {
+  display: flex; gap: 16px; justify-content: space-between;
+  align-items: center; flex-wrap: wrap;
+}
+.grid {
+  display: grid; gap: 16px; margin-top: 28px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.empty {
+  text-align: center; color: var(--text-dim); padding: 80px 0; font-size: 15px;
+}
