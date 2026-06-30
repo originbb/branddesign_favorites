@@ -25,11 +25,11 @@ export function SortableCard({
       }}
     >
       <div style={{ position: "absolute", top: 8, right: 8, zIndex: 2, display: "flex", gap: 4 }}>
-        <button onClick={() => onEdit(bookmark)} aria-label="수정"
+        <button type="button" onClick={() => onEdit(bookmark)} aria-label="수정"
           style={{ border: "none", background: "var(--bg)", borderRadius: 8, padding: "2px 6px" }}>✎</button>
-        <button onClick={() => onDelete(bookmark)} aria-label="삭제"
+        <button type="button" onClick={() => onDelete(bookmark)} aria-label="삭제"
           style={{ border: "none", background: "var(--bg)", borderRadius: 8, padding: "2px 6px" }}>🗑</button>
-        <button {...attributes} {...listeners} aria-label="이동"
+        <button type="button" {...attributes} {...listeners} aria-label="이동"
           style={{ border: "none", background: "var(--bg)", borderRadius: 8, padding: "2px 6px", cursor: "grab" }}>⠿</button>
       </div>
       <BookmarkCard bookmark={bookmark} />

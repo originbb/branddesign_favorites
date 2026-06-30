@@ -103,14 +103,14 @@ export function ManageBoard({
       <div className={styles.topbar}>
         <h1 className={styles.h1}>브랜드전략디자인팀의 즐겨찾기</h1>
         <span className={styles.badge}>관리 모드</span>
-        <button className={styles.addBtn}
+        <button type="button" className={styles.addBtn}
           onClick={() => { setEditing(null); setShowForm(true); }}>+ 추가</button>
       </div>
 
       <div className={styles.catRow}>
         <input className={styles.catInput} placeholder="새 카테고리"
-          value={newCat} onChange={(e) => setNewCat(e.target.value)} />
-        <button className={styles.addBtn} onClick={addCategory}>카테고리 추가</button>
+          value={newCat} onChange={(e) => setNewCat(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCategory(); } }} />
+        <button type="button" className={styles.addBtn} onClick={addCategory}>카테고리 추가</button>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onCategoryDragEnd}>
           <SortableContext items={categories.map((c) => `cat-${c.id}`)} strategy={horizontalListSortingStrategy}>
             {categories.map((c) => (
@@ -136,6 +136,7 @@ export function ManageBoard({
         <div className={styles.dialog} onClick={() => { setShowForm(false); setEditing(null); }}>
           <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
             <BookmarkForm
+              key={editing?.id ?? "new"}
               categories={categories}
               initial={editing ?? undefined}
               onSubmit={saveBookmark}

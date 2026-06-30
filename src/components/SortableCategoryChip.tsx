@@ -30,14 +30,14 @@ export function SortableCategoryChip({
         fontSize: 14,
       }}
     >
-      <button
+      <button type="button"
         {...attributes}
         {...listeners}
         aria-label="카테고리 이동"
         style={{ border: "none", background: "transparent", color: "var(--text-dim)", cursor: "grab", padding: 0 }}
       >⠿</button>
       {category.name}
-      <button
+      <button type="button"
         onClick={() => onDelete(category.id)}
         aria-label="카테고리 삭제"
         style={{ border: "none", background: "transparent", color: "var(--text-dim)", padding: 0 }}
