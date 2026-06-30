@@ -49,7 +49,8 @@ export async function deleteBookmark(id: number): Promise<void> {
 }
 
 export async function reorderBookmarks(ids: number[]): Promise<void> {
-  for (let i = 0; i < ids.length; i++) {
-    await sql`UPDATE bookmarks SET sort_order = ${i} WHERE id = ${ids[i]}`;
-  }
+  if (ids.length === 0) return;
+  await sql.transaction(
+    ids.map((id, i) => sql`UPDATE bookmarks SET sort_order = ${i} WHERE id = ${id}`),
+  );
 }

@@ -29,7 +29,8 @@ export async function deleteCategory(id: number): Promise<void> {
 }
 
 export async function reorderCategories(ids: number[]): Promise<void> {
-  for (let i = 0; i < ids.length; i++) {
-    await sql`UPDATE categories SET sort_order = ${i} WHERE id = ${ids[i]}`;
-  }
+  if (ids.length === 0) return;
+  await sql.transaction(
+    ids.map((id, i) => sql`UPDATE categories SET sort_order = ${i} WHERE id = ${id}`),
+  );
 }
