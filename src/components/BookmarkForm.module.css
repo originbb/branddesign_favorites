@@ -1,0 +1,16 @@
+.form { display: flex; flex-direction: column; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.label { font-size: 13px; color: var(--text-dim); }
+.input, .select {
+  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); font-size: 14px;
+}
+.actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+.primary {
+  background: var(--accent); color: #fff; border: none;
+  padding: 10px 20px; border-radius: 980px; font-size: 14px; font-weight: 600;
+}
+.ghost {
+  background: transparent; color: var(--text-dim); border: 1px solid var(--border);
+  padding: 10px 20px; border-radius: 980px; font-size: 14px;
+}

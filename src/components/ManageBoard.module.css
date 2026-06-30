@@ -1,0 +1,10 @@
+.page { max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+.badge { font-size: 12px; color: var(--accent); border: 1px solid var(--accent); border-radius: 980px; padding: 4px 10px; }
+.addBtn { background: var(--accent); color: #fff; border: none; padding: 10px 18px; border-radius: 980px; font-weight: 600; }
+.grid { display: grid; gap: 16px; margin-top: 24px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.dialog { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 10; }
+.sheet { background: var(--surface); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 420px; box-shadow: var(--shadow-hover); }
+.catRow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.catInput { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
