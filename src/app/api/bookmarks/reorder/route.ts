@@ -9,6 +9,9 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const ids = Array.isArray(body?.ids) ? body.ids.map(Number) : null;
   if (!ids) return NextResponse.json({ error: "ids required" }, { status: 400 });
+  if (ids.some((v: number) => !Number.isInteger(v) || v <= 0)) {
+    return NextResponse.json({ error: "ids must be positive integers" }, { status: 400 });
+  }
   await reorderBookmarks(ids);
   return NextResponse.json({ ok: true });
 }

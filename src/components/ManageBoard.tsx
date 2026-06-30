@@ -45,7 +45,12 @@ export function ManageBoard({
 
   async function removeBookmark(b: Bookmark) {
     if (!confirm(`"${b.title}" 삭제할까요?`)) return;
-    await fetch(`/api/bookmarks/${b.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/bookmarks/${b.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      alert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
+      router.refresh();
+      return;
+    }
     setBookmarks((prev) => prev.filter((x) => x.id !== b.id));
     router.refresh();
   }
@@ -57,10 +62,14 @@ export function ManageBoard({
     const newIndex = bookmarks.findIndex((b) => b.id === over.id);
     const next = arrayMove(bookmarks, oldIndex, newIndex);
     setBookmarks(next);
-    await fetch("/api/bookmarks/reorder", {
+    const res = await fetch("/api/bookmarks/reorder", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: next.map((b) => b.id) }),
     });
+    if (!res.ok) {
+      alert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
+      router.refresh();
+    }
   }
 
   async function addCategory() {
@@ -79,8 +88,30 @@ export function ManageBoard({
 
   async function removeCategory(id: number) {
     if (!confirm("카테고리를 삭제할까요? (북마크는 '없음'으로 남습니다)")) return;
-    await fetch(`/api/categories/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      alert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
+      router.refresh();
+      return;
+    }
     setCategories((prev) => prev.filter((c) => c.id !== id));
+    router.refresh();
+  }
+
+  async function renameCategory(id: number, name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const res = await fetch(`/api/categories/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: trimmed }),
+    });
+    if (!res.ok) {
+      alert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
+      router.refresh();
+      return;
+    }
+    setCategories((prev) => prev.map((c) => c.id === id ? { ...c, name: trimmed } : c));
     router.refresh();
   }
 
@@ -92,10 +123,14 @@ export function ManageBoard({
     if (oldIndex === -1 || newIndex === -1) return;
     const next = arrayMove(categories, oldIndex, newIndex);
     setCategories(next);
-    await fetch("/api/categories/reorder", {
+    const res = await fetch("/api/categories/reorder", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: next.map((c) => c.id) }),
     });
+    if (!res.ok) {
+      alert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
+      router.refresh();
+    }
   }
 
   return (
@@ -114,7 +149,7 @@ export function ManageBoard({
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onCategoryDragEnd}>
           <SortableContext items={categories.map((c) => `cat-${c.id}`)} strategy={horizontalListSortingStrategy}>
             {categories.map((c) => (
-              <SortableCategoryChip key={c.id} category={c} onDelete={removeCategory} />
+              <SortableCategoryChip key={c.id} category={c} onDelete={removeCategory} onRename={renameCategory} />
             ))}
           </SortableContext>
         </DndContext>

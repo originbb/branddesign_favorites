@@ -13,7 +13,7 @@ npm run dev
 ## 배포 (Vercel + Neon)
 
 1. **Neon**에서 무료 Postgres 프로젝트 생성 → 연결 문자열 복사.
-2. Neon SQL 에디터에 `db/schema.sql` 내용을 붙여 실행 (테이블 생성).
+2. Neon SQL 에디터에 `db/schema.sql` 내용을 붙여 실행 (테이블 생성). 선택 사항으로 `db/seed.sql`을 실행하면 예시 시작 카테고리가 추가됩니다.
 3. **GitHub**에 이 저장소 push.
 4. **Vercel**에서 New Project → GitHub 저장소 import.
 5. Vercel 프로젝트 환경변수 설정:
