@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: "팀이 함께 보는 즐겨찾기 모음",
 };
 
+export const viewport = { themeColor: "#000000" };
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
