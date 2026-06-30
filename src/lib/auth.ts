@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
-
-export const ADMIN_COOKIE = "admin_token";
+import { ADMIN_COOKIE } from "@/lib/cookies";
+export { ADMIN_COOKIE };
 
 export function verifyToken(
   provided: string | undefined | null,

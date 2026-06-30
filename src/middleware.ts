@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_COOKIE } from "@/lib/auth";
+import { ADMIN_COOKIE } from "@/lib/cookies";
 
 // /manage?key=TOKEN 로 들어오면 토큰을 쿠키에 저장하고 깔끔한 /manage 로 리다이렉트.
 export function middleware(request: NextRequest) {
