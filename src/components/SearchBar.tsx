@@ -9,6 +9,7 @@ export function SearchBar({
       className={styles.input}
       type="search"
       placeholder="검색…"
+      aria-label="검색"
       value={value}
       onChange={(e) => onChange(e.target.value)}
     />

@@ -2,7 +2,7 @@
 .tab {
   padding: 8px 16px; border-radius: 980px; border: 1px solid var(--border);
   background: var(--surface); color: var(--text-dim); font-size: 14px;
-  transition: all 0.15s ease;
+  transition: all 0.15s ease; cursor: pointer;
 }
 .tab:hover { color: var(--text); }
 .active { background: var(--accent); color: #fff; border-color: transparent; }

@@ -12,6 +12,7 @@ export function CategoryTabs({
   return (
     <div className={styles.tabs}>
       <button
+        type="button"
         className={`${styles.tab} ${active === "all" ? styles.active : ""}`}
         onClick={() => onSelect("all")}
       >
@@ -19,6 +20,7 @@ export function CategoryTabs({
       </button>
       {categories.map((c) => (
         <button
+          type="button"
           key={c.id}
           className={`${styles.tab} ${active === c.id ? styles.active : ""}`}
           onClick={() => onSelect(c.id)}
