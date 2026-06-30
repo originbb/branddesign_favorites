@@ -25,6 +25,9 @@ export async function POST(request: Request) {
     body?.categoryId === null || body?.categoryId === undefined
       ? null
       : Number(body.categoryId);
+  if (categoryId !== null && !Number.isFinite(categoryId)) {
+    return NextResponse.json({ error: "categoryId must be a number" }, { status: 400 });
+  }
   const created = await createBookmark({
     title, url, description, faviconUrl: faviconUrl(url), categoryId,
   });

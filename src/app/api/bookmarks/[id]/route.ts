@@ -11,6 +11,10 @@ export async function PATCH(
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   const { id } = await params;
+  const numId = Number(id);
+  if (!Number.isInteger(numId) || numId <= 0) {
+    return NextResponse.json({ error: "invalid id" }, { status: 400 });
+  }
   const body = await request.json().catch(() => null);
   const title = typeof body?.title === "string" ? body.title.trim() : "";
   const url = normalizeUrl(typeof body?.url === "string" ? body.url : "");
@@ -25,7 +29,10 @@ export async function PATCH(
     body?.categoryId === null || body?.categoryId === undefined
       ? null
       : Number(body.categoryId);
-  await updateBookmark(Number(id), {
+  if (categoryId !== null && !Number.isFinite(categoryId)) {
+    return NextResponse.json({ error: "categoryId must be a number" }, { status: 400 });
+  }
+  await updateBookmark(numId, {
     title, url, description, faviconUrl: faviconUrl(url), categoryId,
   });
   return NextResponse.json({ ok: true });
@@ -39,6 +46,10 @@ export async function DELETE(
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   const { id } = await params;
-  await deleteBookmark(Number(id));
+  const numId = Number(id);
+  if (!Number.isInteger(numId) || numId <= 0) {
+    return NextResponse.json({ error: "invalid id" }, { status: 400 });
+  }
+  await deleteBookmark(numId);
   return NextResponse.json({ ok: true });
 }
