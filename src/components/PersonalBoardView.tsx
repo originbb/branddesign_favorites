@@ -12,6 +12,7 @@ import { CategoryTabs } from "./CategoryTabs";
 import { SearchBar } from "./SearchBar";
 import { PersonalSortableCard } from "./PersonalSortableCard";
 import { ParticleText } from "./ParticleText";
+import { ThemeToggle } from "./ThemeToggle";
 import styles from "./PersonalBoardView.module.css";
 
 export function PersonalBoardView({
@@ -103,7 +104,8 @@ export function PersonalBoardView({
       <header className={styles.header}>
         <div style={{ position: "relative" }}>
           <ParticleText text={particleText} />
-          <div className={styles.headActions} style={{ position: "absolute", top: -20, right: 0, zIndex: 10 }}>
+          <div className={styles.headActions} style={{ position: "absolute", top: -20, right: 0, zIndex: 10, display: "flex", alignItems: "center" }}>
+            <ThemeToggle />
             <button type="button" className={styles.addBtn}
               onClick={() => { setEditing(null); setShowForm(true); }}>+ 내 링크</button>
             <button type="button" className={styles.ghostBtn} onClick={logout}>로그아웃</button>

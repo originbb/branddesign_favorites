@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useRef } from "react";
 import { Bebas_Neue } from "next/font/google";
+import { useTheme } from "next-themes";
 import styles from "./ParticleText.module.css";
 
 const bebasNeue = Bebas_Neue({ weight: "400", subsets: ["latin"] });
@@ -59,6 +60,7 @@ class Particle {
 
 export function ParticleText({ text, subtitle }: { text: string; subtitle?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -119,8 +121,8 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
       const textData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       ctx.clearRect(0, 0, rect.width, rect.height);
 
-      // 다크모드 여부에 따라 파티클 색상 결정
-      const isDarkMode = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      // 다크모드 여부에 따라 파티클 색상 결정 (next-themes 사용)
+      const isDarkMode = resolvedTheme === "dark";
       const color = isDarkMode ? "#ffffff" : "#1d1d1f";
       
       // 픽셀 간격(gap)과 점 크기를 줄여서 훨씬 더 촘촘하고 섬세하게 표현
@@ -173,7 +175,7 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
       cancelAnimationFrame(animationFrameId);
       clearTimeout(resizeTimer);
     };
-  }, [text, subtitle]);
+  }, [text, subtitle, resolvedTheme]);
 
   return (
     <div className={styles.container}>

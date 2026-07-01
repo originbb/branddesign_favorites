@@ -7,6 +7,7 @@ import { CategoryTabs } from "./CategoryTabs";
 import { SearchBar } from "./SearchBar";
 import { LoginModal } from "./LoginModal";
 import { ParticleText } from "./ParticleText";
+import { ThemeToggle } from "./ThemeToggle";
 import styles from "./BoardView.module.css";
 
 export function BoardView({
@@ -33,14 +34,16 @@ export function BoardView({
       <header className={styles.header}>
         <div style={{ position: "relative" }}>
           <ParticleText text="FAVORITES" />
-          <button 
-            type="button" 
-            className={styles.loginBtn} 
-            onClick={() => setShowLogin(true)}
-            style={{ position: "absolute", top: -20, right: 0, zIndex: 10 }}
-          >
-            내 보드
-          </button>
+          <div style={{ position: "absolute", top: 16, right: 16, display: "flex", alignItems: "center", gap: "8px" }}>
+            <ThemeToggle />
+            <button 
+              type="button" 
+              className={styles.loginBtn} 
+              onClick={() => setShowLogin(true)}
+            >
+              내 보드
+            </button>
+          </div>
         </div>
         <div className={styles.controls}>
           <CategoryTabs categories={categories} active={active} onSelect={setActive} />
