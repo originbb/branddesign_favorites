@@ -33,11 +33,15 @@ export async function POST(request: Request) {
 
   let profileId: number;
   const existing = await findByNameKey(nameKey);
+  let mustChange = false;
+
   if (existing) {
-    // PIN이 'RESET' 상태면 → 새 PIN으로 교체
-    if (existing.pinHash === "RESET") {
-      const newHash = hashPin(pin);
-      await sql`UPDATE profiles SET pin_hash = ${newHash} WHERE id = ${existing.id}`;
+    if (existing.pinHash.startsWith("MUST_CHANGE:")) {
+      const realHash = existing.pinHash.slice("MUST_CHANGE:".length);
+      if (!verifyPin(pin, realHash)) {
+        return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
+      }
+      mustChange = true;
       profileId = existing.id;
     } else if (!verifyPin(pin, existing.pinHash)) {
       return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
@@ -54,9 +58,12 @@ export async function POST(request: Request) {
       if (!retry) {
         return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
       }
-      if (retry.pinHash === "RESET") {
-        const newHash = hashPin(pin);
-        await sql`UPDATE profiles SET pin_hash = ${newHash} WHERE id = ${retry.id}`;
+      if (retry.pinHash.startsWith("MUST_CHANGE:")) {
+        const realHash = retry.pinHash.slice("MUST_CHANGE:".length);
+        if (!verifyPin(pin, realHash)) {
+          return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
+        }
+        mustChange = true;
         profileId = retry.id;
       } else if (!verifyPin(pin, retry.pinHash)) {
         return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
@@ -77,5 +84,5 @@ export async function POST(request: Request) {
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });
-  return NextResponse.json({ id: profileId, name, pinReset: existing?.pinHash === "RESET" });
+  return NextResponse.json({ id: profileId, name, pinReset: mustChange });
 }

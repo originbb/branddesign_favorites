@@ -12,6 +12,7 @@ import type { Bookmark, Category, Profile } from "@/lib/types";
 import { BookmarkForm, type BookmarkFormValue } from "./BookmarkForm";
 import { SortableCard } from "./SortableCard";
 import { SortableCategoryChip } from "./SortableCategoryChip";
+import { useDialog } from "./DialogProvider";
 import styles from "./ManageBoard.module.css";
 
 export function ManageBoard({
@@ -26,11 +27,7 @@ export function ManageBoard({
   const [editing, setEditing] = useState<Bookmark | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [newCat, setNewCat] = useState("");
-  const [resetTarget, setResetTarget] = useState<Profile | null>(null);
-  const [resetMsg, setResetMsg] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState("");
-  const [deleteMsg, setDeleteMsg] = useState("");
+  const { showAlert, showConfirm, showPrompt } = useDialog();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   async function saveBookmark(value: BookmarkFormValue) {
@@ -52,10 +49,10 @@ export function ManageBoard({
   }
 
   async function removeBookmark(b: Bookmark) {
-    if (!confirm(`"${b.title}" 삭제할까요?`)) return;
+    if (!(await showConfirm(`"${b.title}" 삭제할까요?`))) return;
     const res = await fetch(`/api/bookmarks/${b.id}`, { method: "DELETE" });
     if (!res.ok) {
-      alert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
+      await showAlert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
       router.refresh();
       return;
     }
@@ -75,7 +72,7 @@ export function ManageBoard({
       body: JSON.stringify({ ids: next.map((b) => b.id) }),
     });
     if (!res.ok) {
-      alert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
+      await showAlert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
       router.refresh();
     }
   }
@@ -95,10 +92,10 @@ export function ManageBoard({
   }
 
   async function removeCategory(id: number) {
-    if (!confirm("카테고리를 삭제할까요? (북마크는 '없음'으로 남습니다)")) return;
+    if (!(await showConfirm("카테고리를 삭제할까요? (북마크는 '없음'으로 남습니다)"))) return;
     const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
     if (!res.ok) {
-      alert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
+      await showAlert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
       router.refresh();
       return;
     }
@@ -115,7 +112,7 @@ export function ManageBoard({
       body: JSON.stringify({ name: trimmed }),
     });
     if (!res.ok) {
-      alert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
+      await showAlert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
       router.refresh();
       return;
     }
@@ -136,13 +133,13 @@ export function ManageBoard({
       body: JSON.stringify({ ids: next.map((c) => c.id) }),
     });
     if (!res.ok) {
-      alert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
+      await showAlert("저장에 실패했어요. 권한이 만료되었거나 오류가 발생했습니다.");
       router.refresh();
     }
   }
 
   async function handleRenameProfile(p: Profile) {
-    const name = prompt(`"${p.name}" 님의 새 이름을 입력하세요. (로그인 이름도 함께 변경됩니다)`, p.name)?.trim();
+    const name = (await showPrompt(`"${p.name}" 님의 새 이름을 입력하세요. (로그인 이름도 함께 변경됩니다)`, p.name))?.trim();
     if (!name || name === p.name) return;
     const res = await fetch(`/api/profile/${p.id}`, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -151,37 +148,35 @@ export function ManageBoard({
     if (res.ok) {
       setProfiles((prev) => prev.map((x) => x.id === p.id ? { ...x, name } : x));
     } else if (res.status === 409) {
-      alert("이미 같은 이름의 프로필이 있어 변경할 수 없습니다.");
+      await showAlert("이미 같은 이름의 프로필이 있어 변경할 수 없습니다.");
     } else {
-      alert("이름 변경에 실패했습니다.");
+      await showAlert("이름 변경에 실패했습니다.");
     }
   }
 
-  async function handleDeleteProfile() {
-    if (!deleteTarget) return;
-    setDeleteMsg("");
-    const res = await fetch(`/api/profile/${deleteTarget.id}`, { method: "DELETE" });
+  async function handleDeleteProfile(p: Profile) {
+    const confirmName = await showPrompt(`${p.name} 님의 프로필과 개인 북마크 ${p.bookmarkCount ?? 0}개가 모두 영구 삭제됩니다.\n\n계속하려면 아래에 프로필 이름 "${p.name}" 을(를) 정확히 입력하세요.`);
+    if (confirmName !== p.name) return;
+    const res = await fetch(`/api/profile/${p.id}`, { method: "DELETE" });
     if (res.ok) {
-      setProfiles((prev) => prev.filter((x) => x.id !== deleteTarget.id));
-      setDeleteTarget(null);
-      setDeleteConfirm("");
+      setProfiles((prev) => prev.filter((x) => x.id !== p.id));
+      await showAlert("삭제되었습니다.");
     } else {
-      setDeleteMsg("❌ 삭제에 실패했습니다. 권한이 만료되었을 수 있습니다.");
+      await showAlert("❌ 삭제에 실패했습니다. 권한이 만료되었을 수 있습니다.");
     }
   }
 
-  async function handleResetPin() {
-    if (!resetTarget) return;
-    setResetMsg("");
+  async function handleResetPin(p: Profile) {
+    if (!(await showConfirm(`${p.name} 님의 PIN을 초기화할까요?`))) return;
     const res = await fetch("/api/profile/reset-pin", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profileId: resetTarget.id }),
+      body: JSON.stringify({ profileId: p.id }),
     });
     if (res.ok) {
-      setResetMsg(`✅ ${resetTarget.name} 님의 PIN이 초기화되었습니다. 다음 로그인 시 새 PIN을 설정하게 됩니다.`);
-      setTimeout(() => { setResetTarget(null); setResetMsg(""); }, 2000);
+      const data = await res.json();
+      await showAlert(`✅ ${p.name} 님의 PIN이 초기화되었습니다.\n\n임시 PIN 번호: ${data.newPin}\n\n사용자에게 이 임시 PIN 번호를 전달해 주세요. 사용자는 이 번호로 로그인한 뒤 본인의 PIN으로 변경해야 합니다.`);
     } else {
-      setResetMsg("❌ PIN 초기화에 실패했습니다.");
+      await showAlert("❌ PIN 초기화에 실패했습니다.");
     }
   }
 
@@ -258,11 +253,11 @@ export function ManageBoard({
                     이름 수정
                   </button>
                   <button type="button" className={styles.resetBtn}
-                    onClick={() => { setResetTarget(p); setResetMsg(""); }}>
+                    onClick={() => handleResetPin(p)}>
                     PIN 초기화
                   </button>
                   <button type="button" className={styles.dangerBtn}
-                    onClick={() => { setDeleteTarget(p); setDeleteConfirm(""); setDeleteMsg(""); }}>
+                    onClick={() => handleDeleteProfile(p)}>
                     삭제
                   </button>
                 </span>
@@ -286,61 +281,16 @@ export function ManageBoard({
         </div>
       )}
 
-      {resetTarget && (
-        <div className={styles.dialog} onClick={() => { setResetTarget(null); setResetMsg(""); }}>
+      {showForm && (
+        <div className={styles.dialog} onClick={() => { setShowForm(false); setEditing(null); }}>
           <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: "0 0 8px" }}>PIN 초기화</h3>
-            <p style={{ margin: "0 0 16px", opacity: 0.7 }}>
-              <strong>{resetTarget.name}</strong> 님의 PIN을 초기화할까요?
-              <br />
-              <span style={{ fontSize: 13 }}>초기화하면 다음 로그인 시 새 PIN을 설정하게 됩니다.</span>
-            </p>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button type="button" className={styles.addBtn}
-                onClick={handleResetPin}>
-                초기화
-              </button>
-              <button type="button" className={styles.resetBtn}
-                onClick={() => { setResetTarget(null); setResetMsg(""); }}>
-                취소
-              </button>
-            </div>
-            {resetMsg && <p style={{ marginTop: 12, fontSize: 14 }}>{resetMsg}</p>}
-          </div>
-        </div>
-      )}
-
-      {deleteTarget && (
-        <div className={styles.dialog} onClick={() => { setDeleteTarget(null); setDeleteConfirm(""); setDeleteMsg(""); }}>
-          <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: "0 0 8px", color: "#d33" }}>프로필 삭제</h3>
-            <p style={{ margin: "0 0 16px", opacity: 0.8, fontSize: 14 }}>
-              <strong>{deleteTarget.name}</strong> 님의 프로필을 삭제하면
-              개인 북마크 <strong>{deleteTarget.bookmarkCount ?? 0}개</strong>와
-              개인 카테고리가 <strong>모두 함께 삭제</strong>되며 되돌릴 수 없습니다.
-              <br />
-              계속하려면 아래에 프로필 이름 <strong>{deleteTarget.name}</strong> 을(를) 입력하세요.
-            </p>
-            <input
-              className={styles.confirmInput}
-              value={deleteConfirm}
-              onChange={(e) => setDeleteConfirm(e.target.value)}
-              placeholder={deleteTarget.name}
-              autoFocus
+            <BookmarkForm
+              key={editing?.id ?? "new"}
+              categories={categories}
+              initial={editing ?? undefined}
+              onSubmit={saveBookmark}
+              onCancel={() => { setShowForm(false); setEditing(null); }}
             />
-            <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-              <button type="button" className={styles.dangerBtn}
-                disabled={deleteConfirm.trim() !== deleteTarget.name}
-                style={deleteConfirm.trim() !== deleteTarget.name ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
-                onClick={handleDeleteProfile}>
-                영구 삭제
-              </button>
-              <button type="button" className={styles.resetBtn}
-                onClick={() => { setDeleteTarget(null); setDeleteConfirm(""); setDeleteMsg(""); }}>
-                취소
-              </button>
-            </div>
-            {deleteMsg && <p style={{ marginTop: 12, fontSize: 14 }}>{deleteMsg}</p>}
           </div>
         </div>
       )}

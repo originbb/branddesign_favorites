@@ -50,11 +50,13 @@ export async function listProfiles(): Promise<Profile[]> {
   return rows.map((r) => ({ ...map(r), bookmarkCount: r.bookmark_count }));
 }
 
-export async function resetPin(profileId: number): Promise<boolean> {
+export async function resetPin(profileId: number): Promise<string | null> {
+  const tempPin = Math.floor(1000 + Math.random() * 9000).toString();
+  const newHash = `MUST_CHANGE:${await import("./pin").then((m) => m.hashPin(tempPin))}`;
   const rows = (await sql`
-    UPDATE profiles SET pin_hash = 'RESET' WHERE id = ${profileId} RETURNING id
+    UPDATE profiles SET pin_hash = ${newHash} WHERE id = ${profileId} RETURNING id
   `) as { id: number }[];
-  return rows.length > 0;
+  return rows.length > 0 ? tempPin : null;
 }
 
 export async function deleteProfile(profileId: number): Promise<boolean> {

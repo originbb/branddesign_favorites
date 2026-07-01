@@ -13,6 +13,7 @@ import { SearchBar } from "./SearchBar";
 import { PersonalSortableCard } from "./PersonalSortableCard";
 import { ParticleText } from "./ParticleText";
 import { ThemeToggle } from "./ThemeToggle";
+import { useDialog } from "./DialogProvider";
 import styles from "./PersonalBoardView.module.css";
 
 export function PersonalBoardView({
@@ -24,6 +25,7 @@ export function PersonalBoardView({
   initialPersonalCategories: Category[];
 }) {
   const router = useRouter();
+  const { showAlert, showConfirm, showPrompt } = useDialog();
   const dndId = useId();
   const [cards, setCards] = useState<Card[]>(initialCards);
   const [personalCats, setPersonalCats] = useState<Category[]>(initialPersonalCategories);
@@ -88,7 +90,7 @@ export function PersonalBoardView({
       body: JSON.stringify({ keys: next.map((c) => c.key) }),
     });
     if (!res.ok) {
-      alert("순서 저장에 실패했어요. 다시 로그인해야 할 수 있어요.");
+      await showAlert("순서 저장에 실패했어요. 다시 로그인해야 할 수 있어요.");
       router.refresh();
     }
   }
@@ -102,7 +104,7 @@ export function PersonalBoardView({
       body: JSON.stringify(payload),
     });
     if (!res.ok) {
-      alert("저장에 실패했어요. 다시 로그인해야 할 수 있어요.");
+      await showAlert("저장에 실패했어요. 다시 로그인해야 할 수 있어요.");
     }
     setShowForm(false);
     setEditing(null);
@@ -110,9 +112,9 @@ export function PersonalBoardView({
   }
 
   async function removeBookmark(card: Card) {
-    if (!confirm(`"${card.bookmark.title}" 삭제할까요?`)) return;
+    if (!(await showConfirm(`"${card.bookmark.title}" 삭제할까요?`))) return;
     const res = await fetch(`/api/personal/bookmarks/${card.bookmark.id}`, { method: "DELETE" });
-    if (!res.ok) alert("삭제에 실패했어요.");
+    if (!res.ok) await showAlert("삭제에 실패했어요.");
     router.refresh();
   }
 
@@ -128,12 +130,12 @@ export function PersonalBoardView({
       setPersonalCats((prev) => [...prev, created]);
       setNewCat("");
     } else {
-      alert("카테고리 추가에 실패했어요.");
+      await showAlert("카테고리 추가에 실패했어요.");
     }
   }
 
   async function renameCategory(id: number, current: string) {
-    const name = prompt("카테고리 이름", current)?.trim();
+    const name = (await showPrompt("카테고리 이름", current))?.trim();
     if (!name || name === current) return;
     const res = await fetch(`/api/personal/categories/${id}`, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -142,25 +144,45 @@ export function PersonalBoardView({
     if (res.ok) {
       setPersonalCats((prev) => prev.map((c) => c.id === id ? { ...c, name } : c));
     } else {
-      alert("이름 변경에 실패했어요.");
+      await showAlert("이름 변경에 실패했어요.");
     }
   }
 
   async function removeCategory(id: number) {
-    if (!confirm("카테고리를 삭제할까요? (이 카테고리의 링크는 '없음'으로 남습니다)")) return;
+    if (!(await showConfirm("카테고리를 삭제할까요? (이 카테고리의 링크는 '없음'으로 남습니다)"))) return;
     const res = await fetch(`/api/personal/categories/${id}`, { method: "DELETE" });
     if (res.ok) {
       setPersonalCats((prev) => prev.filter((c) => c.id !== id));
       if (active === `p${id}`) setActive("all");
       router.refresh();
     } else {
-      alert("삭제에 실패했어요.");
+      await showAlert("삭제에 실패했어요.");
     }
   }
 
   async function logout() {
     await fetch("/api/profile/logout", { method: "POST" });
     router.refresh();
+  }
+
+  async function changePin() {
+    const current = await showPrompt("현재 PIN을 입력하세요.");
+    if (!current) return;
+    const newPin = await showPrompt("새로운 4자리 PIN을 입력하세요.");
+    if (!newPin || !/^\d{4}$/.test(newPin)) {
+      await showAlert("4자리 숫자로 된 새 PIN을 입력해야 합니다.");
+      return;
+    }
+    const res = await fetch("/api/profile/change-pin", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPin: current, newPin }),
+    });
+    if (res.ok) {
+      await showAlert("PIN이 성공적으로 변경되었습니다.");
+    } else {
+      const data = await res.json().catch(() => null);
+      await showAlert(data?.error ?? "PIN 변경에 실패했습니다.");
+    }
   }
 
   // 영문 이름은 Bebas Neue, 국문 등은 Pretendard로 렌더 (ParticleText가 자동 판별)
@@ -174,6 +196,7 @@ export function PersonalBoardView({
           <ParticleText text={particleText} />
           <div className={styles.headActions} style={{ position: "absolute", top: -20, right: 0, zIndex: 10, display: "flex", alignItems: "center" }}>
             <ThemeToggle />
+            <button type="button" className={styles.ghostBtn} onClick={changePin}>PIN 변경</button>
             <button type="button" className={styles.addBtn}
               onClick={() => { setEditing(null); setShowForm(true); }}>+ 내 링크</button>
             <button type="button" className={styles.ghostBtn} onClick={logout}>로그아웃</button>

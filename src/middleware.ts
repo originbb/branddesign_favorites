@@ -24,12 +24,14 @@ async function adminCookieToken(secret: string): Promise<string> {
 // 깔끔한 /manage 로 리다이렉트한다. 원문 토큰은 쿠키에 저장하지 않는다.
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
+  let response = NextResponse.next();
+
   if (pathname === "/manage" && searchParams.has("key")) {
     const provided = searchParams.get("key") ?? "";
     const expected = process.env.ADMIN_TOKEN ?? "";
     const url = request.nextUrl.clone();
     url.searchParams.delete("key");
-    const response = NextResponse.redirect(url);
+    response = NextResponse.redirect(url);
 
     if (expected && provided === expected) {
       const secret = process.env.SESSION_SECRET || expected;
@@ -43,7 +45,37 @@ export async function middleware(request: NextRequest) {
     }
     return response;
   }
-  return NextResponse.next();
+
+  // CSRF 보호 (상태를 변경하는 API 요청)
+  const isApi = pathname.startsWith('/api/');
+  const isStateChanging = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method);
+  
+  if (isApi && isStateChanging) {
+    const cookieToken = request.cookies.get('csrf_token')?.value;
+    const headerToken = request.headers.get('x-csrf-token');
+    
+    if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+      return NextResponse.json({ error: 'CSRF token mismatch or missing' }, { status: 403 });
+    }
+  }
+
+  // 모든 브라우저 요청(페이지, API 등)에 대해 csrf_token 쿠키 발급
+  if (!request.cookies.has('csrf_token')) {
+    response.cookies.set('csrf_token', crypto.randomUUID(), {
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: false, // 클라이언트에서 읽어야 함
+    });
+  }
+
+  return response;
 }
 
-export const config = { matcher: ["/manage"] };
+export const config = {
+  matcher: [
+    // /manage 및 모든 API 라우트 매칭
+    "/manage",
+    "/api/:path*"
+  ]
+};

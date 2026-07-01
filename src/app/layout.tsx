@@ -14,17 +14,18 @@ export const viewport: Viewport = {
 };
 
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { DialogProvider } from "@/components/DialogProvider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        {/* 국문 타이틀 웹폰트(TitleKR)를 받는 CDN에 미리 연결해 첫 렌더 지연 완화 */}
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
       </head>
       <body>
         <ThemeProvider>
-          {children}
+          <DialogProvider>
+            {children}
+          </DialogProvider>
         </ThemeProvider>
       </body>
     </html>

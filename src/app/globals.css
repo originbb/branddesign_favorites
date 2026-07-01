@@ -4,7 +4,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("https://cdn.jsdelivr.net/npm/@fontsource/black-han-sans/files/black-han-sans-korean-400-normal.woff2") format("woff2");
+  src: url("/fonts/black-han-sans-korean-400-normal.woff2") format("woff2");
   unicode-range: U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7A3, U+D7B0-D7FF, U+3000-303F, U+FF00-FFEF;
 }
 @font-face {
@@ -12,7 +12,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("https://cdn.jsdelivr.net/npm/@fontsource/black-han-sans/files/black-han-sans-latin-400-normal.woff2") format("woff2");
+  src: url("/fonts/black-han-sans-latin-400-normal.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+2000-206F;
 }
 
