@@ -243,7 +243,7 @@ export function validPin(pin: string): boolean {
 
 ### 신규 컴포넌트
 
-- **`LoginPanel` (client):** "내 보드" 버튼 → 이름+PIN 입력 폼(모달 또는 인라인). `POST /api/profile/login` → 성공 시 `router.refresh()`. 안내 문구: "처음이면 이름과 PIN이 그대로 새 보드로 만들어집니다."
+- **`LoginPanel` (client):** "내 보드" 버튼 → **모달 팝업**으로 이름+PIN 입력 폼. `POST /api/profile/login` → 성공 시 모달 닫고 `router.refresh()`. 안내 문구: "처음이면 이름과 PIN이 그대로 새 보드로 만들어집니다." 모달은 ESC·배경 클릭으로 닫힘, 열릴 때 이름 입력에 포커스, 오류 시 폼 안에 메시지 표시.
 - **`PersonalBoardView` (client):** `BoardView`와 유사하되
   - 카드가 dnd-kit `SortableContext`로 드래그 정렬(기존 `SortableCard` 패턴 재사용). 정렬 종료 시 새 키 배열을 `POST /api/personal/order`로 저장(디바운스).
   - 상단에 "내 링크 추가" 버튼 → 개인 북마크 폼(`BookmarkForm` 재사용/변형). 개인 카드에는 수정·삭제 액션.
