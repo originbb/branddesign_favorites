@@ -51,6 +51,7 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
             onChange={(e) => setName(e.target.value)} required
           />
           <input
+            type="password"
             className={styles.input} placeholder="PIN 4자리" value={pin}
             inputMode="numeric" maxLength={4}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} required
