@@ -16,18 +16,21 @@ export function BookmarkCard({
     hostname = new URL(bookmark.url).hostname;
   } catch {}
 
-  const clearbitUrl = `https://logo.clearbit.com/${hostname}`;
+  const unavatarUrl = `https://unavatar.io/${hostname}?fallback=false`;
   const googleUrl = `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostname}&size=128`;
+  const ddgUrl = `https://icons.duckduckgo.com/ip3/${hostname}.ico`;
   
   // Custom favicon (if different from our generated ones)
   const initialSrc = bookmark.faviconUrl && !bookmark.faviconUrl.includes("google.com/s2") && !bookmark.faviconUrl.includes("t3.gstatic.com") 
     ? bookmark.faviconUrl 
-    : clearbitUrl;
+    : unavatarUrl;
 
   const [imgSrc, setImgSrc] = useState(initialSrc);
+  const [errorCount, setErrorCount] = useState(0);
 
   useEffect(() => {
     setImgSrc(initialSrc);
+    setErrorCount(0);
   }, [initialSrc]);
 
   return (
@@ -43,13 +46,14 @@ export function BookmarkCard({
         className={styles.favicon}
         src={imgSrc}
         onError={(e) => {
-          if (imgSrc !== googleUrl) {
-            // 첫 번째 시도(Clearbit 또는 기존 DB 저장 URL)가 실패하면 구글 파비콘으로 전환
+          if (errorCount === 0) {
             setImgSrc(googleUrl);
+          } else if (errorCount === 1) {
+            setImgSrc(ddgUrl);
           } else {
-            // 구글 파비콘마저 실패(엑스박스)하면, 아예 이미지를 숨겨서 깔끔하게 보이도록 처리
             e.currentTarget.style.display = 'none';
           }
+          setErrorCount((prev) => prev + 1);
         }}
         alt=""
         width={32}
