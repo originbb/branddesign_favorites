@@ -5,6 +5,7 @@ import { filterBookmarks } from "@/lib/search";
 import { BookmarkCard } from "./BookmarkCard";
 import { CategoryTabs } from "./CategoryTabs";
 import { SearchBar } from "./SearchBar";
+import { LoginModal } from "./LoginModal";
 import styles from "./BoardView.module.css";
 
 export function BoardView({
@@ -12,6 +13,7 @@ export function BoardView({
 }: { bookmarks: Bookmark[]; categories: Category[] }) {
   const [active, setActive] = useState<number | "all">("all");
   const [query, setQuery] = useState("");
+  const [showLogin, setShowLogin] = useState(false);
 
   const visible = useMemo(() => {
     const byCat = active === "all"
@@ -28,7 +30,12 @@ export function BoardView({
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.h1}>브랜드전략디자인팀의 즐겨찾기</h1>
+        <div className={styles.titleRow}>
+          <h1 className={styles.h1}>브랜드전략디자인팀의 즐겨찾기</h1>
+          <button type="button" className={styles.loginBtn} onClick={() => setShowLogin(true)}>
+            내 보드
+          </button>
+        </div>
         <div className={styles.controls}>
           <CategoryTabs categories={categories} active={active} onSelect={setActive} />
           <SearchBar value={query} onChange={setQuery} />
@@ -51,6 +58,7 @@ export function BoardView({
           ))}
         </div>
       )}
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
     </main>
   );
 }

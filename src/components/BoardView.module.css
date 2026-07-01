@@ -1,6 +1,11 @@
 .page { max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
 .header { margin-bottom: 32px; }
 .h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 24px; }
+.titleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.loginBtn {
+  padding: 6px 14px; border-radius: 980px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; white-space: nowrap;
+}
 .controls {
   display: flex; gap: 16px; justify-content: space-between;
   align-items: center; flex-wrap: wrap;
