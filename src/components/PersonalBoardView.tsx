@@ -104,7 +104,7 @@ export function PersonalBoardView({
       <header className={styles.header}>
         <div style={{ position: "relative" }}>
           <ParticleText text={particleText} />
-          <div className={styles.headActions} style={{ position: "absolute", top: -40, right: 0, zIndex: 10, display: "flex", alignItems: "center" }}>
+          <div className={styles.headActions} style={{ position: "absolute", top: -20, right: 0, zIndex: 10, display: "flex", alignItems: "center" }}>
             <ThemeToggle />
             <button type="button" className={styles.addBtn}
               onClick={() => { setEditing(null); setShowForm(true); }}>+ 내 링크</button>

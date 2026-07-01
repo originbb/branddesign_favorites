@@ -34,7 +34,7 @@ export function BoardView({
       <header className={styles.header}>
         <div style={{ position: "relative" }}>
           <ParticleText text="FAVORITES" />
-          <div style={{ position: "absolute", top: -40, right: 0, display: "flex", alignItems: "center", gap: "8px", zIndex: 10 }}>
+          <div style={{ position: "absolute", top: -20, right: 0, display: "flex", alignItems: "center", gap: "8px", zIndex: 10 }}>
             <ThemeToggle />
             <button 
               type="button" 
