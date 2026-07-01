@@ -36,3 +36,12 @@ export function faviconUrl(url: string): string | null {
     return null;
   }
 }
+
+export function validName(name: string): string | null {
+  const t = name.trim();
+  return t.length >= 1 && t.length <= 20 ? t : null;
+}
+
+export function validPin(pin: string): boolean {
+  return /^\d{4}$/.test(pin);
+}
