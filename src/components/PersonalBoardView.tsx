@@ -11,6 +11,7 @@ import { BookmarkForm, type BookmarkFormValue } from "./BookmarkForm";
 import { CategoryTabs } from "./CategoryTabs";
 import { SearchBar } from "./SearchBar";
 import { PersonalSortableCard } from "./PersonalSortableCard";
+import { ParticleText } from "./ParticleText";
 import styles from "./PersonalBoardView.module.css";
 
 export function PersonalBoardView({
@@ -93,12 +94,16 @@ export function PersonalBoardView({
     router.refresh();
   }
 
+  // Bebas Neue 폰트가 영문 전용이므로, 이름이 영문인지 판별
+  const isEnglishName = /^[a-zA-Z0-9\s]+$/.test(profileName);
+  const particleText = isEnglishName ? profileName.toUpperCase() : "FAVORITES";
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.titleRow}>
-          <h1 className={styles.h1}>{profileName} 님의 보드</h1>
-          <div className={styles.headActions}>
+        <div style={{ position: "relative" }}>
+          <ParticleText text={particleText} />
+          <div className={styles.headActions} style={{ position: "absolute", top: -20, right: 0, zIndex: 10 }}>
             <button type="button" className={styles.addBtn}
               onClick={() => { setEditing(null); setShowForm(true); }}>+ 내 링크</button>
             <button type="button" className={styles.ghostBtn} onClick={logout}>로그아웃</button>

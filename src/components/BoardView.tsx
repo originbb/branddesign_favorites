@@ -6,6 +6,7 @@ import { BookmarkCard } from "./BookmarkCard";
 import { CategoryTabs } from "./CategoryTabs";
 import { SearchBar } from "./SearchBar";
 import { LoginModal } from "./LoginModal";
+import { ParticleText } from "./ParticleText";
 import styles from "./BoardView.module.css";
 
 export function BoardView({
@@ -30,9 +31,14 @@ export function BoardView({
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.titleRow}>
-          <h1 className={styles.h1}>브랜드전략디자인팀의 즐겨찾기</h1>
-          <button type="button" className={styles.loginBtn} onClick={() => setShowLogin(true)}>
+        <div style={{ position: "relative" }}>
+          <ParticleText text="FAVORITES" />
+          <button 
+            type="button" 
+            className={styles.loginBtn} 
+            onClick={() => setShowLogin(true)}
+            style={{ position: "absolute", top: -20, right: 0, zIndex: 10 }}
+          >
             내 보드
           </button>
         </div>
