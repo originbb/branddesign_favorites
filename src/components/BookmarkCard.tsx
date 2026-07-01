@@ -42,9 +42,13 @@ export function BookmarkCard({
       <img
         className={styles.favicon}
         src={imgSrc}
-        onError={() => {
-          if (imgSrc === clearbitUrl) {
+        onError={(e) => {
+          if (imgSrc !== googleUrl) {
+            // 첫 번째 시도(Clearbit 또는 기존 DB 저장 URL)가 실패하면 구글 파비콘으로 전환
             setImgSrc(googleUrl);
+          } else {
+            // 구글 파비콘마저 실패(엑스박스)하면, 아예 이미지를 숨겨서 깔끔하게 보이도록 처리
+            e.currentTarget.style.display = 'none';
           }
         }}
         alt=""
