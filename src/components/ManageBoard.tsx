@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useId } from "react";
 import { useRouter } from "next/navigation";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
@@ -8,21 +8,26 @@ import {
 import {
   SortableContext, arrayMove, rectSortingStrategy, horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import type { Bookmark, Category } from "@/lib/types";
+import type { Bookmark, Category, Profile } from "@/lib/types";
 import { BookmarkForm, type BookmarkFormValue } from "./BookmarkForm";
 import { SortableCard } from "./SortableCard";
 import { SortableCategoryChip } from "./SortableCategoryChip";
 import styles from "./ManageBoard.module.css";
 
 export function ManageBoard({
-  initialBookmarks, initialCategories,
-}: { initialBookmarks: Bookmark[]; initialCategories: Category[] }) {
+  initialBookmarks, initialCategories, initialProfiles,
+}: { initialBookmarks: Bookmark[]; initialCategories: Category[]; initialProfiles: Profile[] }) {
   const router = useRouter();
+  const dndId1 = useId();
+  const dndId2 = useId();
   const [bookmarks, setBookmarks] = useState(initialBookmarks);
   const [categories, setCategories] = useState(initialCategories);
+  const [profiles] = useState(initialProfiles);
   const [editing, setEditing] = useState<Bookmark | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [newCat, setNewCat] = useState("");
+  const [resetTarget, setResetTarget] = useState<Profile | null>(null);
+  const [resetMsg, setResetMsg] = useState("");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   async function saveBookmark(value: BookmarkFormValue) {
@@ -133,6 +138,21 @@ export function ManageBoard({
     }
   }
 
+  async function handleResetPin() {
+    if (!resetTarget) return;
+    setResetMsg("");
+    const res = await fetch("/api/profile/reset-pin", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profileId: resetTarget.id }),
+    });
+    if (res.ok) {
+      setResetMsg(`✅ ${resetTarget.name} 님의 PIN이 초기화되었습니다. 다음 로그인 시 새 PIN을 설정하게 됩니다.`);
+      setTimeout(() => { setResetTarget(null); setResetMsg(""); }, 2000);
+    } else {
+      setResetMsg("❌ PIN 초기화에 실패했습니다.");
+    }
+  }
+
   return (
     <main className={styles.page}>
       <div className={styles.topbar}>
@@ -146,7 +166,7 @@ export function ManageBoard({
         <input className={styles.catInput} placeholder="새 카테고리"
           value={newCat} onChange={(e) => setNewCat(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCategory(); } }} />
         <button type="button" className={styles.addBtn} onClick={addCategory}>카테고리 추가</button>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onCategoryDragEnd}>
+        <DndContext id={dndId1} sensors={sensors} collisionDetection={closestCenter} onDragEnd={onCategoryDragEnd}>
           <SortableContext items={categories.map((c) => `cat-${c.id}`)} strategy={horizontalListSortingStrategy}>
             {categories.map((c) => (
               <SortableCategoryChip key={c.id} category={c} onDelete={removeCategory} onRename={renameCategory} />
@@ -155,7 +175,7 @@ export function ManageBoard({
         </DndContext>
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+      <DndContext id={dndId2} sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={bookmarks.map((b) => b.id)} strategy={rectSortingStrategy}>
           <div className={styles.grid}>
             {bookmarks.map((b) => (
@@ -167,6 +187,23 @@ export function ManageBoard({
         </SortableContext>
       </DndContext>
 
+      {profiles.length > 0 && (
+        <section className={styles.profileSection}>
+          <h2 className={styles.profileH2}>👤 개인 보드 프로필 관리</h2>
+          <div className={styles.profileList}>
+            {profiles.map((p) => (
+              <div key={p.id} className={styles.profileRow}>
+                <span className={styles.profileName}>{p.name}</span>
+                <button type="button" className={styles.resetBtn}
+                  onClick={() => { setResetTarget(p); setResetMsg(""); }}>
+                  PIN 초기화
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {showForm && (
         <div className={styles.dialog} onClick={() => { setShowForm(false); setEditing(null); }}>
           <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
@@ -177,6 +214,30 @@ export function ManageBoard({
               onSubmit={saveBookmark}
               onCancel={() => { setShowForm(false); setEditing(null); }}
             />
+          </div>
+        </div>
+      )}
+
+      {resetTarget && (
+        <div className={styles.dialog} onClick={() => { setResetTarget(null); setResetMsg(""); }}>
+          <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 8px" }}>PIN 초기화</h3>
+            <p style={{ margin: "0 0 16px", opacity: 0.7 }}>
+              <strong>{resetTarget.name}</strong> 님의 PIN을 초기화할까요?
+              <br />
+              <span style={{ fontSize: 13 }}>초기화하면 다음 로그인 시 새 PIN을 설정하게 됩니다.</span>
+            </p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="button" className={styles.addBtn}
+                onClick={handleResetPin}>
+                초기화
+              </button>
+              <button type="button" className={styles.resetBtn}
+                onClick={() => { setResetTarget(null); setResetMsg(""); }}>
+                취소
+              </button>
+            </div>
+            {resetMsg && <p style={{ marginTop: 12, fontSize: 14 }}>{resetMsg}</p>}
           </div>
         </div>
       )}

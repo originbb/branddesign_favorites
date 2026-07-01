@@ -5,6 +5,7 @@ import { validName, validPin } from "@/lib/validation";
 import { hashPin, verifyPin } from "@/lib/pin";
 import { signProfile } from "@/lib/session";
 import { findByNameKey, createProfile } from "@/lib/profiles";
+import { sql } from "@/lib/db";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -21,10 +22,16 @@ export async function POST(request: Request) {
   let profileId: number;
   const existing = await findByNameKey(nameKey);
   if (existing) {
-    if (!verifyPin(pin, existing.pinHash)) {
+    // PIN이 'RESET' 상태면 → 새 PIN으로 교체
+    if (existing.pinHash === "RESET") {
+      const newHash = hashPin(pin);
+      await sql`UPDATE profiles SET pin_hash = ${newHash} WHERE id = ${existing.id}`;
+      profileId = existing.id;
+    } else if (!verifyPin(pin, existing.pinHash)) {
       return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
+    } else {
+      profileId = existing.id;
     }
-    profileId = existing.id;
   } else {
     try {
       const created = await createProfile(name, nameKey, hashPin(pin));
@@ -35,10 +42,15 @@ export async function POST(request: Request) {
       if (!retry) {
         return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
       }
-      if (!verifyPin(pin, retry.pinHash)) {
+      if (retry.pinHash === "RESET") {
+        const newHash = hashPin(pin);
+        await sql`UPDATE profiles SET pin_hash = ${newHash} WHERE id = ${retry.id}`;
+        profileId = retry.id;
+      } else if (!verifyPin(pin, retry.pinHash)) {
         return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
+      } else {
+        profileId = retry.id;
       }
-      profileId = retry.id;
     }
   }
 
@@ -50,5 +62,5 @@ export async function POST(request: Request) {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
   });
-  return NextResponse.json({ id: profileId, name });
+  return NextResponse.json({ id: profileId, name, pinReset: existing?.pinHash === "RESET" });
 }

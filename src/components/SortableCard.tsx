@@ -3,6 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Bookmark } from "@/lib/types";
 import { BookmarkCard } from "./BookmarkCard";
+import styles from "./SortableCard.module.css";
 
 export function SortableCard({
   bookmark, onEdit, onDelete,
@@ -17,20 +18,20 @@ export function SortableCard({
   return (
     <div
       ref={setNodeRef}
+      className={styles.wrapper}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.6 : 1,
-        position: "relative",
       }}
     >
-      <div style={{ position: "absolute", top: 8, right: 8, zIndex: 2, display: "flex", gap: 4 }}>
+      <div className={styles.actions}>
         <button type="button" onClick={() => onEdit(bookmark)} aria-label="수정"
-          style={{ border: "none", background: "var(--bg)", borderRadius: 8, padding: "2px 6px" }}>✎</button>
+          className={styles.btn}>✎</button>
         <button type="button" onClick={() => onDelete(bookmark)} aria-label="삭제"
-          style={{ border: "none", background: "var(--bg)", borderRadius: 8, padding: "2px 6px" }}>🗑</button>
+          className={styles.btn}>🗑</button>
         <button type="button" {...attributes} {...listeners} aria-label="이동"
-          style={{ border: "none", background: "var(--bg)", borderRadius: 8, padding: "2px 6px", cursor: "grab" }}>⠿</button>
+          className={`${styles.btn} ${styles.grabBtn}`}>⠿</button>
       </div>
       <BookmarkCard bookmark={bookmark} />
     </div>

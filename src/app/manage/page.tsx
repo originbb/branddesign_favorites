@@ -1,6 +1,7 @@
 import { isAdmin } from "@/lib/auth";
 import { listBookmarks } from "@/lib/bookmarks";
 import { listCategories } from "@/lib/categories";
+import { listProfiles } from "@/lib/profiles";
 import { BoardView } from "@/components/BoardView";
 import { ManageBoard } from "@/components/ManageBoard";
 
@@ -17,5 +18,7 @@ export default async function ManagePage() {
     return <BoardView bookmarks={bookmarks} categories={categories} />;
   }
 
-  return <ManageBoard initialBookmarks={bookmarks} initialCategories={categories} />;
+  const profiles = await listProfiles();
+  return <ManageBoard initialBookmarks={bookmarks} initialCategories={categories} initialProfiles={profiles} />;
 }
+

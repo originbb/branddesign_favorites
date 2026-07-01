@@ -2,9 +2,18 @@
 .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
 .h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
 .badge { font-size: 12px; color: var(--accent); border: 1px solid var(--accent); border-radius: 980px; padding: 4px 10px; }
-.addBtn { background: var(--accent); color: #fff; border: none; padding: 10px 18px; border-radius: 980px; font-weight: 600; }
+.addBtn { background: var(--accent); color: #fff; border: none; padding: 10px 18px; border-radius: 980px; font-weight: 600; cursor: pointer; }
+.addBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 .grid { display: grid; gap: 16px; margin-top: 24px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 .dialog { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 10; }
 .sheet { background: var(--surface); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 420px; box-shadow: var(--shadow-hover); }
 .catRow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
 .catInput { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.profileSection { margin-top: 48px; border-top: 1px solid var(--border); padding-top: 32px; }
+.profileH2 { font-size: 20px; font-weight: 600; margin: 0 0 16px; }
+.profileList { display: flex; flex-direction: column; gap: 8px; }
+.profileRow { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.profileName { font-weight: 500; }
+.resetBtn { background: none; border: 1px solid var(--border); color: var(--text); padding: 6px 14px; border-radius: 980px; font-size: 13px; cursor: pointer; }
+.resetBtn:hover { border-color: var(--accent); color: var(--accent); }
+

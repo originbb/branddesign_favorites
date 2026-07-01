@@ -31,6 +31,11 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
       setBusy(false);
       return;
     }
+    const data = await res.json().catch(() => null);
+    if (data?.pinReset) {
+      setError(null);
+      alert("PIN이 새로 설정되었습니다! 앞으로 이 PIN으로 로그인하세요.");
+    }
     onClose();
     router.refresh();
   }

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useId } from "react";
 import { useRouter } from "next/navigation";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
@@ -21,6 +21,7 @@ export function PersonalBoardView({
   categories: Category[];
 }) {
   const router = useRouter();
+  const dndId = useId();
   const [cards, setCards] = useState<Card[]>(initialCards);
   const [active, setActive] = useState<number | "all">("all");
   const [query, setQuery] = useState("");
@@ -115,7 +116,7 @@ export function PersonalBoardView({
       {visible.length === 0 ? (
         <p className={styles.empty}>표시할 즐겨찾기가 없어요.</p>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <DndContext id={dndId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <SortableContext items={visible.map((c) => c.key)} strategy={rectSortingStrategy}>
             <div className={styles.grid}>
               {visible.map((c) => (

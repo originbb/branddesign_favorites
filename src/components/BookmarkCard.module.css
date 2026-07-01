@@ -32,7 +32,8 @@
 }
 .favicon {
   width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
-  background: var(--bg);
+  background: transparent;
+  object-fit: contain;
 }
 .body { min-width: 0; }
 .title {

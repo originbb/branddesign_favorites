@@ -31,7 +31,7 @@ export function domainOf(url: string): string {
 export function faviconUrl(url: string): string | null {
   try {
     const u = new URL(url);
-    return `https://www.google.com/s2/favicons?domain=${u.hostname}&sz=64`;
+    return `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${u.hostname}&size=128`;
   } catch {
     return null;
   }

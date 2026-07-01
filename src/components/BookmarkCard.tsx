@@ -1,3 +1,5 @@
+"use client";
+import { useState, useEffect } from "react";
 import type { Bookmark } from "@/lib/types";
 import { domainOf } from "@/lib/validation";
 import styles from "./BookmarkCard.module.css";
@@ -9,6 +11,25 @@ export function BookmarkCard({
   bookmark: Bookmark;
   categoryName?: string;
 }) {
+  let hostname = "example.com";
+  try {
+    hostname = new URL(bookmark.url).hostname;
+  } catch {}
+
+  const clearbitUrl = `https://logo.clearbit.com/${hostname}`;
+  const googleUrl = `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostname}&size=128`;
+  
+  // Custom favicon (if different from our generated ones) or start with clearbit
+  const initialSrc = bookmark.faviconUrl && !bookmark.faviconUrl.includes("google.com/s2") && !bookmark.faviconUrl.includes("t3.gstatic.com") 
+    ? bookmark.faviconUrl 
+    : clearbitUrl;
+
+  const [imgSrc, setImgSrc] = useState(initialSrc);
+
+  useEffect(() => {
+    setImgSrc(initialSrc);
+  }, [initialSrc]);
+
   return (
     <a
       className={`${styles.card} ${categoryName ? styles.hasBadge : ""}`}
@@ -20,7 +41,12 @@ export function BookmarkCard({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         className={styles.favicon}
-        src={bookmark.faviconUrl ?? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='4'/%3E%3Cpath d='M3 9h18'/%3E%3C/svg%3E"}
+        src={imgSrc}
+        onError={() => {
+          if (imgSrc === clearbitUrl) {
+            setImgSrc(googleUrl);
+          }
+        }}
         alt=""
         width={32}
         height={32}

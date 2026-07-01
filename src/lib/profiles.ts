@@ -36,3 +36,17 @@ export async function createProfile(
 export async function setOrderKeys(profileId: number, keys: string[]): Promise<void> {
   await sql`UPDATE profiles SET order_keys = ${keys} WHERE id = ${profileId}`;
 }
+
+export async function listProfiles(): Promise<Profile[]> {
+  const rows = (await sql`
+    SELECT id, name, order_keys FROM profiles ORDER BY name ASC
+  `) as Row[];
+  return rows.map(map);
+}
+
+export async function resetPin(profileId: number): Promise<boolean> {
+  const rows = (await sql`
+    UPDATE profiles SET pin_hash = 'RESET' WHERE id = ${profileId} RETURNING id
+  `) as { id: number }[];
+  return rows.length > 0;
+}

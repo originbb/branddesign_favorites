@@ -4,6 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import type { Bookmark } from "@/lib/types";
 import type { Card } from "@/lib/personalBoard";
 import { BookmarkCard } from "./BookmarkCard";
+import styles from "./SortableCard.module.css";
 
 function toBookmark(card: Card): Bookmark {
   const b = card.bookmark;
@@ -28,25 +29,25 @@ export function PersonalSortableCard({
   return (
     <div
       ref={setNodeRef}
+      className={styles.wrapper}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.6 : 1,
-        position: "relative",
       }}
     >
-      <div style={{ position: "absolute", top: 8, right: 8, zIndex: 2, display: "flex", gap: 4 }}>
+      <div className={styles.actions}>
         {card.kind === "personal" && (
           <>
             <button type="button" onClick={() => onEdit(card)} aria-label="수정"
-              style={{ border: "none", background: "var(--bg)", borderRadius: 8, padding: "2px 6px" }}>✎</button>
+              className={styles.btn}>✎</button>
             <button type="button" onClick={() => onDelete(card)} aria-label="삭제"
-              style={{ border: "none", background: "var(--bg)", borderRadius: 8, padding: "2px 6px" }}>🗑</button>
+              className={styles.btn}>🗑</button>
           </>
         )}
         {draggable && (
           <button type="button" {...attributes} {...listeners} aria-label="이동"
-            style={{ border: "none", background: "var(--bg)", borderRadius: 8, padding: "2px 6px", cursor: "grab" }}>⠿</button>
+            className={`${styles.btn} ${styles.grabBtn}`}>⠿</button>
         )}
       </div>
       <BookmarkCard bookmark={toBookmark(card)} categoryName={categoryName} />
