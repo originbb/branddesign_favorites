@@ -1,0 +1,28 @@
+.page { max-width: 1120px; margin: 0 auto; padding: 32px 20px 64px; }
+.header { margin-bottom: 20px; }
+.titleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.h1 { font-size: 22px; margin: 0; }
+.headActions { display: flex; gap: 8px; }
+.addBtn {
+  padding: 6px 14px; border-radius: 980px; border: 1px solid var(--text);
+  background: var(--text); color: var(--bg); font-size: 13px; cursor: pointer; white-space: nowrap;
+}
+.ghostBtn {
+  padding: 6px 14px; border-radius: 980px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-dim); font-size: 13px; cursor: pointer; white-space: nowrap;
+}
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 16px; }
+.tip { margin: 10px 0 0; font-size: 12px; color: var(--text-dim); }
+.empty { color: var(--text-dim); text-align: center; padding: 64px 0; }
+.grid {
+  display: grid; gap: 12px; margin-top: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+.dialog {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
+  display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px;
+}
+.sheet {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 24px; width: 100%; max-width: 420px;
+}
