@@ -934,7 +934,7 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
   display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px;
 }
 .sheet {
-  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
   padding: 24px; width: 100%; max-width: 360px;
 }
 .title { margin: 0 0 4px; font-size: 18px; }
@@ -991,7 +991,7 @@ import { LoginModal } from "./LoginModal";
 .titleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .loginBtn {
   padding: 6px 14px; border-radius: 980px; border: 1px solid var(--border);
-  background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; white-space: nowrap;
+  background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; white-space: nowrap;
 }
 ```
 
@@ -1264,7 +1264,7 @@ export function PersonalBoardView({
 }
 .ghostBtn {
   padding: 6px 14px; border-radius: 980px; border: 1px solid var(--border);
-  background: var(--card); color: var(--text-dim); font-size: 13px; cursor: pointer; white-space: nowrap;
+  background: var(--surface); color: var(--text-dim); font-size: 13px; cursor: pointer; white-space: nowrap;
 }
 .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 16px; }
 .tip { margin: 10px 0 0; font-size: 12px; color: var(--text-dim); }
@@ -1278,7 +1278,7 @@ export function PersonalBoardView({
   display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px;
 }
 .sheet {
-  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
   padding: 24px; width: 100%; max-width: 420px;
 }
 ```
