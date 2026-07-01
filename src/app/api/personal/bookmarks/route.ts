@@ -21,10 +21,16 @@ export async function POST(request: Request) {
   if (categoryId !== null && !Number.isFinite(categoryId)) {
     return NextResponse.json({ error: "categoryId must be a number" }, { status: 400 });
   }
+  const personalCategoryId =
+    body?.personalCategoryId === null || body?.personalCategoryId === undefined
+      ? null : Number(body.personalCategoryId);
+  if (personalCategoryId !== null && !Number.isFinite(personalCategoryId)) {
+    return NextResponse.json({ error: "personalCategoryId must be a number" }, { status: 400 });
+  }
   let created;
   try {
     created = await createPersonalBookmark(pid, {
-      title, url, description, faviconUrl: faviconUrl(url), categoryId,
+      title, url, description, faviconUrl: faviconUrl(url), categoryId, personalCategoryId,
     });
   } catch {
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });

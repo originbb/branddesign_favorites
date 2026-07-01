@@ -13,14 +13,14 @@ import styles from "./BoardView.module.css";
 export function BoardView({
   bookmarks, categories,
 }: { bookmarks: Bookmark[]; categories: Category[] }) {
-  const [active, setActive] = useState<number | "all">("all");
+  const [active, setActive] = useState<string>("all"); // "all" | "s{id}"
   const [query, setQuery] = useState("");
   const [showLogin, setShowLogin] = useState(false);
 
   const visible = useMemo(() => {
     const byCat = active === "all"
       ? bookmarks
-      : bookmarks.filter((b) => b.categoryId === active);
+      : bookmarks.filter((b) => `s${b.categoryId}` === active);
     return filterBookmarks(byCat, query);
   }, [bookmarks, active, query]);
 

@@ -1,4 +1,4 @@
-.page { max-width: 1120px; margin: 0 auto; padding: 32px 20px 64px; }
+.page { max-width: 1120px; margin: 0 auto; padding: 45px 24px 64px; }
 .header { margin-bottom: 20px; }
 .titleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .h1 { font-size: 22px; margin: 0; }
@@ -12,12 +12,40 @@
   background: var(--surface); color: var(--text-dim); font-size: 13px; cursor: pointer; white-space: nowrap;
 }
 .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 16px; }
-.tip { margin: 10px 0 0; font-size: 12px; color: var(--text-dim); }
+.tip { margin: 22px 0 0; font-size: 12px; color: var(--text-dim); }
 .empty { color: var(--text-dim); text-align: center; padding: 64px 0; }
 .grid {
   display: grid; gap: 12px; margin-top: 20px;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
+/* 개인 카테고리 관리 */
+.catManage {
+  width: 100%; margin-top: 12px; padding: 14px 16px;
+  border: 1px solid var(--border); border-radius: 14px; background: var(--surface);
+}
+.catManageRow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.catInput {
+  padding: 6px 12px; border-radius: 980px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--text); font-size: 13px; min-width: 140px;
+}
+.catList { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.catChip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 8px 5px 12px; border-radius: 980px;
+  border: 1px dashed var(--border); background: var(--bg); font-size: 13px;
+}
+.catChip::before { content: "★"; color: #FFC107; }
+.catChipName {
+  background: none; border: none; color: var(--text); font-size: 13px;
+  cursor: text; padding: 0;
+}
+.catChipDel {
+  border: none; background: none; color: var(--text-dim);
+  cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px;
+}
+.catChipDel:hover { color: #e00; }
+.catEmpty { margin: 12px 0 0; font-size: 12px; color: var(--text-dim); }
+
 .dialog {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
   display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px;

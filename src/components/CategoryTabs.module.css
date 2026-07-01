@@ -6,3 +6,10 @@
 }
 .tab:hover { color: var(--text); }
 .active { background: var(--accent); color: #fff; border-color: transparent; }
+
+/* 개인 카테고리 탭: 노란 별 액센트로 공유 카테고리와 구분 */
+.personal { border-style: dashed; }
+.personal::before { content: "★ "; color: #FFC107; }
+.personalActive { background: #FFC107; color: #1d1d1f; border-color: transparent; }
+.personalActive::before { content: "★ "; color: #1d1d1f; }
+.sep { width: 1px; align-self: stretch; background: var(--border); margin: 2px 2px; }

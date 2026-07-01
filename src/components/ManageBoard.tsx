@@ -22,12 +22,15 @@ export function ManageBoard({
   const dndId2 = useId();
   const [bookmarks, setBookmarks] = useState(initialBookmarks);
   const [categories, setCategories] = useState(initialCategories);
-  const [profiles] = useState(initialProfiles);
+  const [profiles, setProfiles] = useState(initialProfiles);
   const [editing, setEditing] = useState<Bookmark | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [newCat, setNewCat] = useState("");
   const [resetTarget, setResetTarget] = useState<Profile | null>(null);
   const [resetMsg, setResetMsg] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleteMsg, setDeleteMsg] = useState("");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   async function saveBookmark(value: BookmarkFormValue) {
@@ -138,6 +141,35 @@ export function ManageBoard({
     }
   }
 
+  async function handleRenameProfile(p: Profile) {
+    const name = prompt(`"${p.name}" 님의 새 이름을 입력하세요. (로그인 이름도 함께 변경됩니다)`, p.name)?.trim();
+    if (!name || name === p.name) return;
+    const res = await fetch(`/api/profile/${p.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (res.ok) {
+      setProfiles((prev) => prev.map((x) => x.id === p.id ? { ...x, name } : x));
+    } else if (res.status === 409) {
+      alert("이미 같은 이름의 프로필이 있어 변경할 수 없습니다.");
+    } else {
+      alert("이름 변경에 실패했습니다.");
+    }
+  }
+
+  async function handleDeleteProfile() {
+    if (!deleteTarget) return;
+    setDeleteMsg("");
+    const res = await fetch(`/api/profile/${deleteTarget.id}`, { method: "DELETE" });
+    if (res.ok) {
+      setProfiles((prev) => prev.filter((x) => x.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      setDeleteConfirm("");
+    } else {
+      setDeleteMsg("❌ 삭제에 실패했습니다. 권한이 만료되었을 수 있습니다.");
+    }
+  }
+
   async function handleResetPin() {
     if (!resetTarget) return;
     setResetMsg("");
@@ -156,10 +188,33 @@ export function ManageBoard({
   return (
     <main className={styles.page}>
       <div className={styles.topbar}>
-        <h1 className={styles.h1}>브랜드전략디자인팀의 즐겨찾기</h1>
-        <span className={styles.badge}>관리 모드</span>
+        <div className={styles.titleGroup}>
+          <h1 className={styles.h1}>즐겨찾기함</h1>
+          <span className={styles.badge}>관리 모드</span>
+        </div>
         <button type="button" className={styles.addBtn}
           onClick={() => { setEditing(null); setShowForm(true); }}>+ 추가</button>
+      </div>
+
+      <div className={styles.stats}>
+        <div className={styles.statCard}>
+          <div className={styles.statNum}>{bookmarks.length}</div>
+          <div className={styles.statLabel}>팀 북마크</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statNum}>{categories.length}</div>
+          <div className={styles.statLabel}>카테고리</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statNum}>{profiles.length}</div>
+          <div className={styles.statLabel}>개인 보드 프로필</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statNum}>
+            {profiles.reduce((sum, p) => sum + (p.bookmarkCount ?? 0), 0)}
+          </div>
+          <div className={styles.statLabel}>개인 북마크 합계</div>
+        </div>
       </div>
 
       <div className={styles.catRow}>
@@ -193,11 +248,24 @@ export function ManageBoard({
           <div className={styles.profileList}>
             {profiles.map((p) => (
               <div key={p.id} className={styles.profileRow}>
-                <span className={styles.profileName}>{p.name}</span>
-                <button type="button" className={styles.resetBtn}
-                  onClick={() => { setResetTarget(p); setResetMsg(""); }}>
-                  PIN 초기화
-                </button>
+                <span className={styles.profileMeta}>
+                  <span className={styles.profileName}>{p.name}</span>
+                  <span className={styles.profileCount}>개인 북마크 {p.bookmarkCount ?? 0}개</span>
+                </span>
+                <span className={styles.profileActions}>
+                  <button type="button" className={styles.resetBtn}
+                    onClick={() => handleRenameProfile(p)}>
+                    이름 수정
+                  </button>
+                  <button type="button" className={styles.resetBtn}
+                    onClick={() => { setResetTarget(p); setResetMsg(""); }}>
+                    PIN 초기화
+                  </button>
+                  <button type="button" className={styles.dangerBtn}
+                    onClick={() => { setDeleteTarget(p); setDeleteConfirm(""); setDeleteMsg(""); }}>
+                    삭제
+                  </button>
+                </span>
               </div>
             ))}
           </div>
@@ -238,6 +306,41 @@ export function ManageBoard({
               </button>
             </div>
             {resetMsg && <p style={{ marginTop: 12, fontSize: 14 }}>{resetMsg}</p>}
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className={styles.dialog} onClick={() => { setDeleteTarget(null); setDeleteConfirm(""); setDeleteMsg(""); }}>
+          <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 8px", color: "#d33" }}>프로필 삭제</h3>
+            <p style={{ margin: "0 0 16px", opacity: 0.8, fontSize: 14 }}>
+              <strong>{deleteTarget.name}</strong> 님의 프로필을 삭제하면
+              개인 북마크 <strong>{deleteTarget.bookmarkCount ?? 0}개</strong>와
+              개인 카테고리가 <strong>모두 함께 삭제</strong>되며 되돌릴 수 없습니다.
+              <br />
+              계속하려면 아래에 프로필 이름 <strong>{deleteTarget.name}</strong> 을(를) 입력하세요.
+            </p>
+            <input
+              className={styles.confirmInput}
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder={deleteTarget.name}
+              autoFocus
+            />
+            <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+              <button type="button" className={styles.dangerBtn}
+                disabled={deleteConfirm.trim() !== deleteTarget.name}
+                style={deleteConfirm.trim() !== deleteTarget.name ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
+                onClick={handleDeleteProfile}>
+                영구 삭제
+              </button>
+              <button type="button" className={styles.resetBtn}
+                onClick={() => { setDeleteTarget(null); setDeleteConfirm(""); setDeleteMsg(""); }}>
+                취소
+              </button>
+            </div>
+            {deleteMsg && <p style={{ marginTop: 12, fontSize: 14 }}>{deleteMsg}</p>}
           </div>
         </div>
       )}

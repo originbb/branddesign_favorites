@@ -27,10 +27,12 @@ export function BookmarkCard({
 
   const [imgSrc, setImgSrc] = useState(initialSrc);
   const [errorCount, setErrorCount] = useState(0);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     setImgSrc(initialSrc);
     setErrorCount(0);
+    setFailed(false);
   }, [initialSrc]);
 
   return (
@@ -41,24 +43,32 @@ export function BookmarkCard({
       rel="noopener noreferrer"
     >
       {categoryName && <span className={styles.badge}>{categoryName}</span>}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        className={styles.favicon}
-        src={imgSrc}
-        onError={(e) => {
-          if (errorCount === 0) {
-            setImgSrc(googleUrl);
-          } else if (errorCount === 1) {
-            setImgSrc(ddgUrl);
-          } else {
-            e.currentTarget.style.display = 'none';
-          }
-          setErrorCount((prev) => prev + 1);
-        }}
-        alt=""
-        width={32}
-        height={32}
-      />
+      {failed ? (
+        <span className={styles.faviconFallback} aria-hidden="true">
+          {hostname.replace(/^www\./, "").charAt(0) || "?"}
+        </span>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className={styles.favicon}
+          src={imgSrc}
+          loading="lazy"
+          decoding="async"
+          onError={() => {
+            if (errorCount === 0) {
+              setImgSrc(googleUrl);
+            } else if (errorCount === 1) {
+              setImgSrc(ddgUrl);
+            } else {
+              setFailed(true);
+            }
+            setErrorCount((prev) => prev + 1);
+          }}
+          alt=""
+          width={32}
+          height={32}
+        />
+      )}
       <div className={styles.body}>
         <p className={styles.title}>{bookmark.title}</p>
         {bookmark.description && <p className={styles.desc}>{bookmark.description}</p>}

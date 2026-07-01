@@ -35,6 +35,14 @@
   background: transparent;
   object-fit: contain;
 }
+/* 파비콘 로드가 모두 실패했을 때, 빈 칸/레이아웃 밀림 대신 도메인 첫 글자 박스로 대체 */
+.faviconFallback {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg); border: 1px solid var(--border);
+  font-size: 15px; font-weight: 700; color: var(--text-dim);
+  text-transform: uppercase;
+}
 .body { min-width: 0; }
 .title {
   font-size: 15px; font-weight: 600; margin: 0;

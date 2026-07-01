@@ -3,8 +3,9 @@ import { cookies } from "next/headers";
 import { PROFILE_COOKIE } from "@/lib/cookies";
 import { validName, validPin } from "@/lib/validation";
 import { hashPin, verifyPin } from "@/lib/pin";
-import { signProfile } from "@/lib/session";
+import { signProfile, SESSION_MAX_AGE } from "@/lib/session";
 import { findByNameKey, createProfile } from "@/lib/profiles";
+import { rateLimit, resetRateLimit } from "@/lib/rateLimit";
 import { sql } from "@/lib/db";
 
 export async function POST(request: Request) {
@@ -19,6 +20,17 @@ export async function POST(request: Request) {
   }
 
   const nameKey = name.toLowerCase();
+
+  // 무차별 대입 방지: 이름별 5분당 10회 제한
+  const rlKey = `login:${nameKey}`;
+  const rl = rateLimit(rlKey, 10, 5 * 60 * 1000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+    );
+  }
+
   let profileId: number;
   const existing = await findByNameKey(nameKey);
   if (existing) {
@@ -54,13 +66,16 @@ export async function POST(request: Request) {
     }
   }
 
+  // 인증 성공 → 해당 이름의 시도 카운터 초기화
+  resetRateLimit(rlKey);
+
   const store = await cookies();
   store.set(PROFILE_COOKIE, signProfile(profileId), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 365,
+    maxAge: SESSION_MAX_AGE,
   });
   return NextResponse.json({ id: profileId, name, pinReset: existing?.pinHash === "RESET" });
 }

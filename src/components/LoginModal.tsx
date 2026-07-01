@@ -60,7 +60,7 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
           <div className={styles.actions}>
             <button type="button" className={styles.ghost} onClick={onClose}>취소</button>
             <button type="submit" className={styles.primary} disabled={busy}>
-              {busy ? "..." : "들어가기"}
+              {busy ? "확인 중…" : "들어가기"}
             </button>
           </div>
         </form>

@@ -8,7 +8,7 @@ const b = (id: number): Bookmark => ({
 });
 const p = (id: number): PersonalBookmark => ({
   id, title: `p${id}`, url: `https://p${id}.com`, description: null,
-  faviconUrl: null, categoryId: null, createdAt: "2026-01-01",
+  faviconUrl: null, categoryId: null, personalCategoryId: null, createdAt: "2026-01-01",
 });
 
 describe("orderCards", () => {

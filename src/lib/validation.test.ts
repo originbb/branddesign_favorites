@@ -22,9 +22,9 @@ describe("normalizeUrl", () => {
 });
 
 describe("faviconUrl", () => {
-  it("builds a google favicon url for a valid host", () => {
+  it("builds a gstatic favicon url for a valid host", () => {
     expect(faviconUrl("https://example.com/")).toBe(
-      "https://www.google.com/s2/favicons?domain=example.com&sz=64",
+      "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://example.com&size=128",
     );
   });
   it("returns null for invalid url", () => {

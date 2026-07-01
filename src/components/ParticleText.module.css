@@ -1,12 +1,12 @@
 .container {
   width: 100%;
-  height: 500px;
+  height: 400px; /* 글자 아래 빈 공간 축소 (글자는 세로 중앙 정렬) */
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-bottom: -30px; /* 여백 축소 */
+  margin-bottom: 0; /* 제목과 탭 사이 자연스러운 간격 유지 */
   user-select: none;
 }
 
