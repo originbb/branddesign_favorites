@@ -1,9 +1,22 @@
 import type { Bookmark } from "@/lib/types";
+import { domainOf } from "@/lib/validation";
 import styles from "./BookmarkCard.module.css";
 
-export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
+export function BookmarkCard({
+  bookmark,
+  categoryName,
+}: {
+  bookmark: Bookmark;
+  categoryName?: string;
+}) {
   return (
-    <a className={styles.card} href={bookmark.url} target="_blank" rel="noopener noreferrer">
+    <a
+      className={`${styles.card} ${categoryName ? styles.hasBadge : ""}`}
+      href={bookmark.url}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {categoryName && <span className={styles.badge}>{categoryName}</span>}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         className={styles.favicon}
@@ -15,6 +28,7 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
       <div className={styles.body}>
         <p className={styles.title}>{bookmark.title}</p>
         {bookmark.description && <p className={styles.desc}>{bookmark.description}</p>}
+        <p className={styles.domain}>{domainOf(bookmark.url)}</p>
       </div>
     </a>
   );

@@ -20,6 +20,11 @@ export function BoardView({
     return filterBookmarks(byCat, query);
   }, [bookmarks, active, query]);
 
+  const categoryName = useMemo(
+    () => new Map(categories.map((c) => [c.id, c.name])),
+    [categories],
+  );
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -34,7 +39,15 @@ export function BoardView({
       ) : (
         <div className={styles.grid}>
           {visible.map((b) => (
-            <BookmarkCard key={b.id} bookmark={b} />
+            <BookmarkCard
+              key={b.id}
+              bookmark={b}
+              categoryName={
+                active === "all" && b.categoryId != null
+                  ? categoryName.get(b.categoryId)
+                  : undefined
+              }
+            />
           ))}
         </div>
       )}

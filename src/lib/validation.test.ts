@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalizeUrl, faviconUrl } from "@/lib/validation";
+import { normalizeUrl, faviconUrl, domainOf } from "@/lib/validation";
 
 describe("normalizeUrl", () => {
   it("keeps a valid https url", () => {
@@ -29,5 +29,20 @@ describe("faviconUrl", () => {
   });
   it("returns null for invalid url", () => {
     expect(faviconUrl("not a url")).toBeNull();
+  });
+});
+
+describe("domainOf", () => {
+  it("strips the www. prefix", () => {
+    expect(domainOf("https://www.figma.com/files")).toBe("figma.com");
+  });
+  it("keeps a non-www subdomain", () => {
+    expect(domainOf("https://sub.a.com/path")).toBe("sub.a.com");
+  });
+  it("returns the bare hostname", () => {
+    expect(domainOf("https://example.com")).toBe("example.com");
+  });
+  it("returns the input unchanged when it is not a valid url", () => {
+    expect(domainOf("not a url")).toBe("not a url");
   });
 });

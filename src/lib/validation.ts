@@ -20,6 +20,14 @@ export function normalizeUrl(input: string): string | null {
   }
 }
 
+export function domainOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
 export function faviconUrl(url: string): string | null {
   try {
     const u = new URL(url);

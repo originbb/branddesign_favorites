@@ -1,4 +1,5 @@
 .card {
+  position: relative;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -8,6 +9,22 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.hasBadge .body { padding-right: 64px; }
+.badge {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 11px;
+  color: var(--text-dim);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 980px;
+  padding: 2px 8px;
+  max-width: 40%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .card:hover {
   transform: translateY(-3px);
@@ -25,4 +42,9 @@
 .desc {
   font-size: 13px; color: var(--text-dim); margin: 2px 0 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.domain {
+  font-size: 12px; color: var(--text-dim); margin: 2px 0 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  opacity: 0.8;
 }
