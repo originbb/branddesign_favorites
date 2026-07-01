@@ -16,12 +16,13 @@ export function BookmarkCard({
     hostname = new URL(bookmark.url).hostname;
   } catch {}
 
+  const clearbitUrl = `https://logo.clearbit.com/${hostname}`;
   const googleUrl = `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostname}&size=128`;
   
   // Custom favicon (if different from our generated ones)
   const initialSrc = bookmark.faviconUrl && !bookmark.faviconUrl.includes("google.com/s2") && !bookmark.faviconUrl.includes("t3.gstatic.com") 
     ? bookmark.faviconUrl 
-    : googleUrl;
+    : clearbitUrl;
 
   const [imgSrc, setImgSrc] = useState(initialSrc);
 
