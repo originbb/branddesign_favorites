@@ -21,8 +21,13 @@ export async function POST(request: Request) {
   if (categoryId !== null && !Number.isFinite(categoryId)) {
     return NextResponse.json({ error: "categoryId must be a number" }, { status: 400 });
   }
-  const created = await createPersonalBookmark(pid, {
-    title, url, description, faviconUrl: faviconUrl(url), categoryId,
-  });
+  let created;
+  try {
+    created = await createPersonalBookmark(pid, {
+      title, url, description, faviconUrl: faviconUrl(url), categoryId,
+    });
+  } catch {
+    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+  }
   return NextResponse.json(created, { status: 201 });
 }

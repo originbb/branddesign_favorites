@@ -29,9 +29,13 @@ export async function PATCH(
   if (categoryId !== null && !Number.isFinite(categoryId)) {
     return NextResponse.json({ error: "categoryId must be a number" }, { status: 400 });
   }
-  await updatePersonalBookmark(pid, numId, {
-    title, url, description, faviconUrl: faviconUrl(url), categoryId,
-  });
+  try {
+    await updatePersonalBookmark(pid, numId, {
+      title, url, description, faviconUrl: faviconUrl(url), categoryId,
+    });
+  } catch {
+    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }
 
@@ -46,6 +50,10 @@ export async function DELETE(
   if (!Number.isInteger(numId) || numId <= 0) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
-  await deletePersonalBookmark(pid, numId);
+  try {
+    await deletePersonalBookmark(pid, numId);
+  } catch {
+    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

@@ -30,9 +30,12 @@ export async function POST(request: Request) {
       const created = await createProfile(name, nameKey, hashPin(pin));
       profileId = created.id;
     } catch {
-      // name_key UNIQUE 경합: 재조회 후 PIN 검증
+      // name_key UNIQUE 경합인지 확인: 재조회했을 때 row가 있으면 경합, 없으면 진짜 오류
       const retry = await findByNameKey(nameKey);
-      if (!retry || !verifyPin(pin, retry.pinHash)) {
+      if (!retry) {
+        return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+      }
+      if (!verifyPin(pin, retry.pinHash)) {
         return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
       }
       profileId = retry.id;
