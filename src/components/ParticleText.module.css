@@ -6,7 +6,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0; /* 제목과 탭 사이 자연스러운 간격 유지 */
+  margin: 15px 0; /* 타이틀 위아래 여백 (Favorites 글자 기준 위아래 15px씩) */
   user-select: none;
 }
 

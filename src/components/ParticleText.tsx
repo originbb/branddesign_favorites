@@ -82,12 +82,36 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
-    // 라틴(ASCII)만이면 Bebas Neue, 그 외(국문 등)는 Pretendard로 렌더
-    const isLatin = /^[\x00-\x7F]*$/.test(text);
-    const displayText = isLatin ? text.toUpperCase() : text;
-    const fontFamily = isLatin ? bebasNeue.style.fontFamily : '"TitleKR"';
+    // 글자 단위로 폰트 분리: 라틴(영문/숫자)은 Bebas Neue, 국문 등은 Black Han Sans(TitleKR).
+    // 한 타이틀에 영문·국문이 섞여 있어도 각 글자를 알맞은 폰트로 렌더한다.
+    const bebasFamily = bebasNeue.style.fontFamily;
+    const KR_FAMILY = '"TitleKR"';
+    const familyOf = (latin: boolean) => (latin ? bebasFamily : KR_FAMILY);
+    const isLatinChar = (ch: string) => ch.charCodeAt(0) <= 0x7f;
+    // 같은 스크립트끼리 묶은 세그먼트 배열 생성 (라틴 세그먼트는 대문자화)
+    const segments: { text: string; latin: boolean }[] = [];
+    for (const ch of text) {
+      const latin = isLatinChar(ch);
+      const glyph = latin ? ch.toUpperCase() : ch;
+      const last = segments[segments.length - 1];
+      if (last && last.latin === latin) last.text += glyph;
+      else segments.push({ text: glyph, latin });
+    }
+    const displayText = segments.map((s) => s.text).join("");
+    const isPureLatin = segments.every((s) => s.latin);
+    const hasKorean = segments.some((s) => !s.latin);
     const fontWeight = "400"; // Bebas Neue / Black Han Sans 모두 단일 굵기 400
-    const stretchY = isLatin ? 1.4 : 1.0; // Bebas는 길쭉하게, 국문은 원본 비율 유지
+    // 세로 스케일: 순수 영문 타이틀만 Bebas 특유의 길쭉한 비율(1.4), 국문이 섞이면 원본 비율(1.0)
+    const stretchY = isPureLatin ? 1.4 : 1.0;
+    // 주어진 폰트 크기에서 전체 세그먼트의 가로 폭 합을 측정
+    const measureTotal = (fs: number) => {
+      let w = 0;
+      for (const seg of segments) {
+        ctx.font = `${fontWeight} ${fs}px ${familyOf(seg.latin)}`;
+        w += ctx.measureText(seg.text).width;
+      }
+      return w;
+    };
 
     let particles: Particle[] = [];
     let animationFrameId: number;
@@ -133,28 +157,50 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
       particles = [];
       ctx.clearRect(0, 0, rect.width, rect.height);
 
-      // 폰트 크기 계산 (화면을 꽉 채울 정도로 극대화)
-      let fontSize = Math.min(rect.width / displayText.length * 2.8, 320);
-
-      ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
       (ctx as any).letterSpacing = "0px"; // 자간 원복
 
-      // 실제 텍스트 폭을 측정해, 넘칠 때만 가로폭(98%)에 맞춰 축소.
-      // 배포본과 동일하게 거의 꽉 차게 유지하되, 아주 긴 이름만 잘리지 않도록 방지.
-      const maxWidth = rect.width * 0.98;
-      const measured = ctx.measureText(displayText).width;
-      if (measured > maxWidth) fontSize *= maxWidth / measured;
+      // cap-height 정규화: 글자 수·언어와 무관하게 "대표 글리프(대문자) 높이 × stretchY"를
+      // 항상 캔버스 높이의 고정 비율(CAP_RATIO)로 맞춰, 위아래 여백을 동일하게 유지한다.
+      const CAP_RATIO = 0.78; // 대표 글리프의 '시각적' 높이 / 캔버스 높이
+      // 실제 텍스트의 우연한 글리프 편차를 배제하려 스크립트별 대표 글리프로 어센트를 측정
+      const refAscentAt = (fs: number) => {
+        let a = 0;
+        for (const seg of segments) {
+          ctx.font = `${fontWeight} ${fs}px ${familyOf(seg.latin)}`;
+          const ref = seg.latin ? "H" : "한";
+          a = Math.max(a, ctx.measureText(ref).actualBoundingBoxAscent);
+        }
+        return a;
+      };
+      // 1) 대표 글리프 높이 × stretchY 가 목표 높이가 되도록 fontSize 산정 (→ 세로 크기·여백 일정)
+      const BASE_FS = 100;
+      const capAtBase = refAscentAt(BASE_FS);
+      const targetCap = rect.height * CAP_RATIO;
+      let fontSize = capAtBase > 0 ? BASE_FS * (targetCap / (capAtBase * stretchY)) : 200;
+      // 2) 아주 긴 이름이 가로 안전폭(94%)을 넘을 때만 축소 (세로 여백이 커지는 유일한 예외)
+      const maxWidth = rect.width * 0.94;
+      const measuredW = measureTotal(fontSize);
+      if (measuredW > maxWidth) fontSize *= maxWidth / measuredW;
       fontSize = Math.max(fontSize, 40); // 너무 작아지지 않도록 하한선
-      ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "white"; 
+
+      const capA = refAscentAt(fontSize);
+      const totalWidth = measureTotal(fontSize);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic"; // 혼합 폰트가 같은 베이스라인에 앉도록
+      ctx.fillStyle = "white";
 
       ctx.save();
-      // 라틴은 길쭉하게(1.4), 국문은 원본 비율(1.0)로 세로 스케일 조정
+      // 순수 영문은 길쭉하게(1.4), 국문 혼합은 원본 비율(1.0)로 세로 스케일 조정
       ctx.scale(1, stretchY);
-      // 거대해진 폰트가 잘리지 않도록 중심 좌표 미세 조정
-      ctx.fillText(displayText, rect.width / 2, (rect.height / 2) / stretchY);
+      // 세그먼트를 좌→우로 이어 그리되(각자 알맞은 폰트) 전체를 가로 중앙정렬
+      let penX = rect.width / 2 - totalWidth / 2;
+      // 대표 글리프(cap) 박스를 세로 중앙에 정렬 → 디센더 유무·글자와 무관하게 여백 일정
+      const baselineY = rect.height / (2 * stretchY) + capA / 2;
+      for (const seg of segments) {
+        ctx.font = `${fontWeight} ${fontSize}px ${familyOf(seg.latin)}`;
+        ctx.fillText(seg.text, penX, baselineY);
+        penX += ctx.measureText(seg.text).width;
+      }
       ctx.restore();
 
       const textData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -185,30 +231,22 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
         }
       }
 
-      // 언어·길이와 무관하게 잘리지 않도록: 실제 잉크 크기가 안전 영역을 넘으면
-      // 캔버스 중앙 기준으로 전체를 균일 축소(절대 확대하지 않음)한 뒤 세로 중앙정렬.
-      if (particles.length > 0 && maxPy >= minPy && maxPx >= minPx) {
+      // 세로 크기·정렬은 draw 단계에서 cap-height 기준으로 이미 일정하게 맞췄다.
+      // 여기서는 아주 긴 이름이 가로 안전폭(글리치/부유 이동 여유)을 넘을 때만 중앙 기준 균일 축소.
+      if (particles.length > 0 && maxPx >= minPx) {
         const inkW = maxPx - minPx;
-        const inkH = maxPy - minPy;
-        // 가로는 글리치/부유 이동분(≈수십px)을 감안해 여유, 세로는 상하 여백 확보
         const targetW = canvas.width * 0.94;
-        const targetH = canvas.height * 0.9;
-        const scale = Math.min(1, targetW / inkW, targetH / inkH);
-        const cx = canvas.width / 2 / dpr;   // 캔버스 중심(논리 좌표)
-        const cy = canvas.height / 2 / dpr;
-        for (let i = 0; i < particles.length; i++) {
-          const p = particles[i];
-          p.originX = cx + (p.originX - cx) * scale;
-          p.originY = cy + (p.originY - cy) * scale;
-          p.x = cx + (p.x - cx) * scale;
-          p.y = cy + (p.y - cy) * scale;
-        }
-        // 축소 후 남은 세로 치우침 보정
-        const scaledMidY = cy + ((minPy + maxPy) / 2 / dpr - cy) * scale;
-        const shiftY = cy - scaledMidY;
-        for (let i = 0; i < particles.length; i++) {
-          particles[i].originY += shiftY;
-          particles[i].y += shiftY;
+        const scale = Math.min(1, targetW / inkW);
+        if (scale < 1) {
+          const cx = canvas.width / 2 / dpr;   // 캔버스 중심(논리 좌표)
+          const cy = canvas.height / 2 / dpr;
+          for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            p.originX = cx + (p.originX - cx) * scale;
+            p.originY = cy + (p.originY - cy) * scale;
+            p.x = cx + (p.x - cx) * scale;
+            p.y = cy + (p.y - cy) * scale;
+          }
         }
       }
     };
@@ -303,11 +341,12 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
 
     // 폰트 로드 후 초기화 지연 (글꼴이 안 그려지는 이슈 방지).
     // 국문일 땐 웹폰트가 실제로 로드된 뒤 그려야 캔버스에 반영됨.
-    const fontReady = isLatin
-      ? document.fonts.ready
-      : document.fonts
-          .load(`400 100px "TitleKR"`, displayText)
-          .then(() => document.fonts.ready);
+    const krText = segments.filter((s) => !s.latin).map((s) => s.text).join("");
+    const fontReady = hasKorean
+      ? document.fonts
+          .load(`400 100px "TitleKR"`, krText)
+          .then(() => document.fonts.ready)
+      : document.fonts.ready;
     // 폰트 로드가 실패해도(네트워크/CDN 문제) 시스템 폰트로 반드시 그려지도록 보장
     fontReady.catch(() => {}).then(() => {
       init();
