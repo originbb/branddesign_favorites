@@ -32,18 +32,18 @@ export function BoardView({
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div style={{ position: "relative" }}>
-          <ParticleText text="FAVORITES" />
-          <div style={{ position: "absolute", top: -30, right: 0, display: "flex", alignItems: "center", gap: "8px", zIndex: 10 }}>
-            <ThemeToggle />
-            <button 
-              type="button" 
-              className={styles.loginBtn} 
-              onClick={() => setShowLogin(true)}
-            >
-              내 보드
-            </button>
-          </div>
+        {/* 메인 카피: 일반 흐름. 스크롤 시 콘텐츠와 함께 자연스럽게 위로 사라짐(별도 효과 없음) */}
+        <ParticleText text="FAVORITES" />
+        {/* 버튼은 fixed로 분리해 항상 상단 우측에 보임(패럴랙스 영향 없음) */}
+        <div className={styles.headActions}>
+          <ThemeToggle />
+          <button
+            type="button"
+            className={styles.loginBtn}
+            onClick={() => setShowLogin(true)}
+          >
+            내 보드
+          </button>
         </div>
         <div className={styles.controls}>
           <CategoryTabs categories={categories} active={active} onSelect={setActive} />

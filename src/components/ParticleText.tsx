@@ -159,10 +159,8 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
 
       (ctx as any).letterSpacing = "0px"; // 자간 원복
 
-      // cap-height 정규화: 글자 수·언어와 무관하게 "대표 글리프(대문자) 높이 × stretchY"를
-      // 항상 캔버스 높이의 고정 비율(CAP_RATIO)로 맞춰, 위아래 여백을 동일하게 유지한다.
-      const CAP_RATIO = 0.78; // 대표 글리프의 '시각적' 높이 / 캔버스 높이
-      // 실제 텍스트의 우연한 글리프 편차를 배제하려 스크립트별 대표 글리프로 어센트를 측정
+      // 반응형: 컨테이너 가로폭(94%)을 채우도록 폰트 크기를 잡는다 → 화면이 넓어지면 타이틀도 커진다.
+      // 대표 글리프 어센트는 세로 중앙정렬 및 세로 잘림 방지에 사용.
       const refAscentAt = (fs: number) => {
         let a = 0;
         for (const seg of segments) {
@@ -172,18 +170,19 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
         }
         return a;
       };
-      // 1) 대표 글리프 높이 × stretchY 가 목표 높이가 되도록 fontSize 산정 (→ 세로 크기·여백 일정)
-      const BASE_FS = 100;
-      const capAtBase = refAscentAt(BASE_FS);
-      const targetCap = rect.height * CAP_RATIO;
-      let fontSize = capAtBase > 0 ? BASE_FS * (targetCap / (capAtBase * stretchY)) : 200;
-      // 2) 아주 긴 이름이 가로 안전폭(94%)을 넘을 때만 축소 (세로 여백이 커지는 유일한 예외)
+      // 1) 가로 채우기: 목표 폭(컨테이너 94%)에 맞춰 fontSize 산정
       const maxWidth = rect.width * 0.94;
-      const measuredW = measureTotal(fontSize);
-      if (measuredW > maxWidth) fontSize *= maxWidth / measuredW;
-      fontSize = Math.max(fontSize, 40); // 너무 작아지지 않도록 하한선
-
-      const capA = refAscentAt(fontSize);
+      const wAt100 = measureTotal(100);
+      let fontSize = wAt100 > 0 ? 100 * (maxWidth / wAt100) : 200;
+      // 2) 세로 안전: 대표 글리프 높이×stretchY가 컨테이너 88%를 넘으면 그만큼만 축소(잘림 방지 + 여백)
+      const maxCapVisual = rect.height * 0.88;
+      let capA = refAscentAt(fontSize);
+      if (capA * stretchY > maxCapVisual) {
+        fontSize *= maxCapVisual / (capA * stretchY);
+        capA = refAscentAt(fontSize);
+      }
+      fontSize = Math.max(fontSize, 40); // 하한선
+      capA = refAscentAt(fontSize);
       const totalWidth = measureTotal(fontSize);
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic"; // 혼합 폰트가 같은 베이스라인에 앉도록
@@ -208,7 +207,7 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
 
       // 다크모드 여부에 따라 파티클 색상 결정 (next-themes 사용)
       const isDarkMode = resolvedTheme === "dark";
-      const color = isDarkMode ? "#ffffff" : "#1d1d1f";
+      const color = isDarkMode ? "#8a8a8f" : "#1d1d1f"; // 다크모드 타이틀을 살짝 어둡게(은은하게)
       
       // 픽셀 간격(gap)과 점 크기를 줄여서 훨씬 더 촘촘하고 섬세하게 표현
       const gap = 4 * dpr;
@@ -339,6 +338,19 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
     };
     document.addEventListener("visibilitychange", onVisibility);
 
+    // 스크롤 중에는 루프를 멈춰 캔버스를 '정지 텍스처'로 둔다(매 프레임 재드로잉이 스크롤 합성과
+    // 경쟁해 버벅이는 것을 방지). 스크롤이 멎으면 잠시 뒤 재개.
+    let scrollIdleTimer: ReturnType<typeof setTimeout>;
+    const onScrollPause = () => {
+      if (!ready || reduceMotion) return;
+      if (running) stopLoop();
+      clearTimeout(scrollIdleTimer);
+      scrollIdleTimer = setTimeout(() => {
+        if (onScreen && !document.hidden) startLoop();
+      }, 180);
+    };
+    window.addEventListener("scroll", onScrollPause, { passive: true });
+
     // 폰트 로드 후 초기화 지연 (글꼴이 안 그려지는 이슈 방지).
     // 국문일 땐 웹폰트가 실제로 로드된 뒤 그려야 캔버스에 반영됨.
     const krText = segments.filter((s) => !s.latin).map((s) => s.text).join("");
@@ -357,11 +369,15 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
 
     let resizeTimer: NodeJS.Timeout;
     const handleResize = () => {
+      // 리사이즈 중엔 캔버스를 컨테이너 크기에 맞춰 즉시 CSS 스케일 → 옛 크기 잔상이 넘쳐 글자가 겹쳐 보이는 것 방지.
+      // 잠시 뒤 재계산(init)으로 해당 크기에 맞춰 선명하게 다시 그린다.
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
         init();
         if (reduceMotion) drawStatic();
-      }, 200);
+      }, 80);
     };
 
     window.addEventListener("resize", handleResize);
@@ -370,10 +386,12 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseout", handleMouseLeave);
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", onScrollPause);
       document.removeEventListener("visibilitychange", onVisibility);
       io.disconnect();
       stopLoop();
       clearTimeout(resizeTimer);
+      clearTimeout(scrollIdleTimer);
     };
   }, [text, subtitle, resolvedTheme]);
 
