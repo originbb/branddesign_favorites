@@ -1,37 +1,112 @@
 # 즐겨찾기함
 
-팀 공유 즐겨찾기 보드. 팀원은 누구나 보고, 관리자만 추가/수정/삭제/정렬.
+팀이 함께 쓰는 **공유 즐겨찾기 보드** + 각자 꾸미는 **개인 보드**를 한 화면에서 제공하는 링크 모음 서비스입니다.
+
+- **공유 보드**: 팀원 누구나 볼 수 있고, 관리자만 추가·수정·삭제·정렬합니다.
+- **개인 보드**: 이름 + PIN으로 로그인하면, 공유 즐겨찾기 위에 **나만의 링크와 카테고리**를 얹어 나만의 방식으로 구성할 수 있습니다. 공유 항목을 *내 화면에서만* 숨기거나 다시 복원할 수 있고, 이 변경은 다른 팀원에게 영향을 주지 않습니다.
+
+## 주요 기능
+
+- 🔗 **공유 즐겨찾기 보드** — 카테고리별 탭, 검색, 파비콘 자동 표시(unavatar → Google → DuckDuckGo 폴백)
+- 👤 **개인 보드** — 이름+PIN 로그인(첫 로그인 시 자동 생성), 개인 링크/개인 카테고리 추가
+- 🙈 **내 보드에서만 숨기기/복원** — 공유 즐겨찾기·공유 카테고리(탭)를 개인 화면에서만 숨김
+- ↕️ **드래그 정렬** — 공유/개인 카테고리를 통합해 자유롭게 재배치 (@dnd-kit)
+- 🌗 **다크 모드** — 시스템 설정 연동 (next-themes)
+- 🔐 **보안** — PIN 해시 저장, 로그인 레이트리밋 + 계정 잠금(Postgres 공유 저장소 기반)
+- 📱 **모바일 대응** — 반응형 레이아웃, iOS 입력 확대 방지, 터치 드래그 핸들
+- 🖼️ **링크 공유 미리보기** — OG/Twitter 카드 이미지 자동 주입
+
+## 기술 스택
+
+| 영역 | 사용 기술 |
+|---|---|
+| 프레임워크 | Next.js 15 (App Router), React 19, TypeScript |
+| 데이터베이스 | Neon (Serverless Postgres) — `@neondatabase/serverless` |
+| 드래그 앤 드롭 | @dnd-kit/core · sortable |
+| 테마 | next-themes |
+| 아이콘 | lucide-react |
+| 테스트 | Vitest |
+| 배포 | Vercel |
 
 ## 로컬 실행
 
 ```bash
 npm install
-cp .env.example .env.local   # DATABASE_URL, ADMIN_TOKEN 채우기
-npm run dev
+cp .env.example .env.local   # 아래 환경변수 채우기
+npm run dev                  # http://localhost:3000
 ```
 
-## 배포 (Vercel + Neon)
+### 환경변수 (`.env.local`)
 
-1. **Neon**에서 무료 Postgres 프로젝트 생성 → 연결 문자열 복사.
-2. Neon SQL 에디터에 `db/schema.sql` 내용을 붙여 실행 (테이블 생성). 선택 사항으로 `db/seed.sql`을 실행하면 예시 시작 카테고리가 추가됩니다.
-3. **GitHub**에 이 저장소 push.
-4. **Vercel**에서 New Project → GitHub 저장소 import.
-5. Vercel 프로젝트 환경변수 설정:
-   - `DATABASE_URL` = Neon 연결 문자열
-   - `ADMIN_TOKEN` = 길고 추측 불가능한 비밀 문자열
-6. Deploy.
+| 변수 | 설명 |
+|---|---|
+| `DATABASE_URL` | Neon Postgres 연결 문자열 (`?sslmode=require` 포함) |
+| `ADMIN_TOKEN` | 관리자(`/manage`) 접근용 비밀 토큰 — 길고 추측 불가능하게 |
+
+### 스크립트
+
+```bash
+npm run dev     # 개발 서버
+npm run build   # 프로덕션 빌드
+npm run start   # 빌드 결과 실행
+npm run lint    # ESLint
+npm run test    # Vitest 단위 테스트
+```
+
+## 데이터베이스 설정
+
+1. [Neon](https://console.neon.tech) 에서 Postgres 프로젝트 생성 → 연결 문자열 복사.
+2. Neon **SQL Editor** 에 `db/schema.sql` 내용을 붙여 실행 (전체 테이블 생성).
+   - 선택: `db/seed.sql` 을 실행하면 예시 카테고리가 추가됩니다.
+3. **기존 운영 DB 업데이트**는 `db/migrations/` 의 해당 `.sql` 을 한 번씩 실행하세요.
+   (새로 만드는 DB는 `schema.sql` 에 모두 포함돼 있어 별도 실행 불필요)
+
+| 마이그레이션 | 내용 |
+|---|---|
+| `2026-07-01-personal-categories.sql` | 개인 카테고리 |
+| `2026-07-03-hidden-shared-bookmarks.sql` | 공유 즐겨찾기 개별 숨김 |
+| `2026-07-03-hidden-shared-categories.sql` | 공유 카테고리(탭) 숨김 |
+| `2026-07-03-unified-category-order.sql` | 공유/개인 통합 정렬 |
+
+### 데이터 모델 (요약)
+
+- `categories` / `bookmarks` — 팀 공유 카테고리·즐겨찾기
+- `profiles` — 개인 보드 사용자(이름, PIN 해시, 정렬 순서)
+- `personal_categories` / `personal_bookmarks` — 프로필별 개인 데이터
+- `personal_hidden_shared` / `personal_hidden_categories` — 프로필별 "내 화면에서만 숨김" 목록
 
 ## 사용법
 
-- 보기: 배포된 주소(`https://...vercel.app/`) — 팀에 공유.
-- 관리: `https://...vercel.app/manage?key=<ADMIN_TOKEN>` 로 한 번 접속하면
-  쿠키에 저장되어 그 기기에선 이후 `/manage` 만으로 관리 가능.
-- 관리 모드에서 카테고리/북마크 추가·수정·삭제, 드래그로 순서 변경.
-- 관리 모드에서 개인 보드 프로필의 이름 수정 / PIN 초기화 / 삭제(이름 입력 확인) 및 전체 통계 확인.
-- 개인 보드에서는 "★ 카테고리 관리" 로 **나만 보는 개인 카테고리** 를 추가·수정·삭제할 수 있음.
+- **보기**: 배포 주소(`https://<project>.vercel.app/`)를 팀에 공유.
+- **개인 보드**: 우상단 **내 보드** → 이름 + PIN 입력. 첫 로그인이면 그대로 새 보드가 생성됩니다.
+  - `+ 내 링크` 로 개인 링크 추가, `★ 카테고리 관리` 로 개인 카테고리 추가·정렬.
+  - 공유 항목은 🙈 버튼으로 내 화면에서만 숨기고, 하단 복원 목록에서 되돌릴 수 있습니다.
+  - `⋮` 메뉴에서 PIN 변경 / 로그아웃.
+- **관리자**: `https://<project>.vercel.app/manage?key=<ADMIN_TOKEN>` 로 한 번 접속하면 쿠키에 저장되어, 이후 그 기기에선 `/manage` 만으로 관리 가능.
+  - 공유 카테고리/북마크 추가·수정·삭제, 드래그 정렬.
+  - 개인 보드 프로필의 이름 수정 / PIN 초기화 / 삭제, 전체 통계 확인.
 
-## 기존 배포 DB 업데이트
+## 배포 (Vercel + Neon)
 
-개인 카테고리 기능을 이미 운영 중인 DB에 추가하려면 Neon SQL 에디터에서
-`db/migrations/2026-07-01-personal-categories.sql` 를 한 번 실행하세요.
-(새로 만드는 DB는 `db/schema.sql` 에 이미 포함되어 있어 별도 실행 불필요)
+1. GitHub 저장소에 push.
+2. Vercel → **New Project** → 저장소 import.
+3. 환경변수 `DATABASE_URL`, `ADMIN_TOKEN` 설정.
+4. Deploy. 이후 `main` 브랜치에 push 하면 프로덕션이 자동 배포됩니다.
+
+## 프로젝트 구조
+
+```
+src/
+├─ app/
+│  ├─ page.tsx            # 메인 보드 (로그인 시 개인 보드, 아니면 공유 보드)
+│  ├─ manage/page.tsx     # 관리자 화면
+│  ├─ layout.tsx          # 메타데이터·테마·다이얼로그 프로바이더
+│  └─ api/                # 북마크·카테고리·프로필·개인 데이터 라우트
+├─ components/            # 보드 뷰, 카드, 카테고리 탭, 로그인 모달 등
+└─ lib/                   # DB 접근, 세션, 정렬, 숨김 목록, 유효성 검사
+
+db/
+├─ schema.sql             # 전체 스키마 (새 DB용)
+├─ seed.sql               # 예시 데이터
+└─ migrations/            # 기존 DB 증분 업데이트용 SQL
+```
