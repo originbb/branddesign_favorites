@@ -1,15 +1,90 @@
-.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
-.tab {
-  padding: 8px 16px; border-radius: 980px; border: 1px solid var(--border);
-  background: var(--surface); color: var(--text-dim); font-size: 14px;
-  transition: all 0.15s ease; cursor: pointer;
+.tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  background: rgba(118, 118, 128, 0.08);
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.01);
+  box-sizing: border-box;
+  width: 100%;
 }
-.tab:hover { color: var(--text); }
-.active { background: var(--accent); color: #fff; border-color: transparent; }
 
-/* 개인 카테고리 탭: 노란 별 액센트로 공유 카테고리와 구분 */
-.personal { border-style: dashed; }
-.personal::before { content: "★ "; color: #FFC107; }
-.personalActive { background: #FFC107; color: #1d1d1f; border-color: transparent; }
-.personalActive::before { content: "★ "; color: #1d1d1f; }
-.sep { width: 1px; align-self: stretch; background: var(--border); margin: 2px 2px; }
+.tabs::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+[data-theme='dark'] .tabs {
+  background: rgba(118, 118, 128, 0.16);
+  border-color: rgba(255, 255, 255, 0.01);
+}
+
+.tab {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.tab:hover:not(.active):not(.personalActive) {
+  color: var(--text);
+  background: rgba(118, 118, 128, 0.04);
+}
+
+[data-theme='dark'] .tab:hover:not(.active):not(.personalActive) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme='dark'] .active {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* 개인 카테고리 탭: 애플 골드/오렌지 액센트 활용 */
+.personal::before {
+  content: "★ ";
+  color: #ff9500;
+  font-size: 11px;
+}
+
+[data-theme='dark'] .personal::before {
+  color: #ff9f0a;
+}
+
+.personalActive {
+  background: rgba(255, 149, 0, 0.12);
+  color: #d76a00;
+  box-shadow: 0 1px 2px rgba(255, 149, 0, 0.1);
+  font-weight: 600;
+}
+
+[data-theme='dark'] .personalActive {
+  background: rgba(255, 159, 10, 0.2);
+  color: #ff9f0a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.sep {
+  width: 1px;
+  height: 14px;
+  align-self: center;
+  background: var(--border);
+  margin: 0 4px;
+}
+

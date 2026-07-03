@@ -1,31 +1,103 @@
-.page { max-width: 1120px; margin: 0 auto; padding: 45px 24px 80px; }
-.header { margin-bottom: 20px; }
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.header {
+  margin-bottom: 24px;
+  position: relative;
+}
 
 .headActions {
-  /* 콘텐츠 컬럼(max 1120, padding 24) 우측에 맞춰 뷰포트 상단 고정 → 스크롤해도 항상 보임 */
   position: fixed;
-  top: 12px;
+  top: 16px;
   right: max(24px, calc((100vw - 1120px) / 2 + 24px));
   z-index: 30;
   display: flex;
   align-items: center;
-  /* 개인 보드 헤더(PersonalBoardView)와 버튼 간격 일치 */
+  gap: 10px;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.7));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 4px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: var(--transition);
+}
+
+[data-theme='dark'] .headActions {
+  background: rgba(28, 28, 30, 0.75);
+}
+
+.h1 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 24px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
 }
-.h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 24px; }
-.titleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
 .loginBtn {
-  padding: 6px 14px; border-radius: 980px; border: 1px solid var(--border);
-  background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; white-space: nowrap;
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 1px solid transparent;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
 }
+
+.loginBtn:hover {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.loginBtn:active {
+  transform: scale(0.96);
+}
+
 .controls {
-  display: flex; gap: 16px; justify-content: space-between;
-  align-items: center; flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+  margin-top: 24px;
+  width: 100%;
 }
+
 .grid {
-  display: grid; gap: 16px; margin-top: 28px;
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
+
 .empty {
-  text-align: center; color: var(--text-dim); padding: 80px 0; font-size: 15px;
+  text-align: center;
+  color: var(--text-dim);
+  padding: 80px 0;
+  font-size: 14px;
 }
+
+@media (max-width: 768px) {
+  .controls {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .headActions {
+    top: 12px;
+    right: 16px;
+  }
+}
+

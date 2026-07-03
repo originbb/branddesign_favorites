@@ -1,25 +1,38 @@
 .card {
   position: relative;
   display: flex;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
   padding: 16px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.2s ease, 
+              background-color 0.2s ease;
+  user-select: none;
 }
+
 /* 카테고리 뱃지: 절대배치 대신 제목 행의 오른쪽 끝으로 정렬(margin-left:auto).
    제목이 길면 제목이 말줄임되고 태그는 항상 우측에 유지된다. */
-.titleRow { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.titleRow { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  min-width: 0; 
+  width: 100%;
+}
+
 .badge {
   margin-left: auto;
   flex-shrink: 0;
   font-size: 11px;
+  font-weight: 500;
   color: var(--text-dim);
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: rgba(118, 118, 128, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.02);
   border-radius: 980px;
   padding: 2px 8px;
   max-width: 45%;
@@ -27,40 +40,97 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-hover);
+
+[data-theme='dark'] .badge {
+  background: rgba(118, 118, 128, 0.16);
+  border-color: rgba(255, 255, 255, 0.02);
 }
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme='dark'] .card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.card:active {
+  transform: translateY(-1px) scale(0.985);
+  box-shadow: var(--shadow);
+}
+
 .favicon {
-  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  width: 32px; 
+  height: 32px; 
+  border-radius: 8px; 
+  flex-shrink: 0;
   background: transparent;
   object-fit: contain;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
+
 /* 파비콘 로드가 모두 실패했을 때, 빈 칸/레이아웃 밀림 대신 도메인 첫 글자 박스로 대체 */
 .faviconFallback {
-  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--bg); border: 1px solid var(--border);
-  font-size: 15px; font-weight: 700; color: var(--text-dim);
+  width: 32px; 
+  height: 32px; 
+  border-radius: 8px; 
+  flex-shrink: 0;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  background: rgba(118, 118, 128, 0.08); 
+  border: 1px solid var(--border);
+  font-size: 14px; 
+  font-weight: 600; 
+  color: var(--text-dim);
   text-transform: uppercase;
 }
-.body { min-width: 0; flex: 1; }
+
+[data-theme='dark'] .faviconFallback {
+  background: rgba(118, 118, 128, 0.16);
+}
+
+.body { 
+  min-width: 0; 
+  flex: 1; 
+}
+
 .title {
-  font-size: 15px; font-weight: 600; margin: 0;
-  flex: 0 1 auto; min-width: 0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 14px; 
+  font-weight: 600; 
+  margin: 0;
+  flex: 0 1 auto; 
+  min-width: 0;
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  color: var(--text);
 }
+
 .desc {
-  font-size: 13px; color: var(--text-dim); margin: 2px 0 0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 12px; 
+  color: var(--text-dim); 
+  margin: 3px 0 0;
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  line-height: 1.4;
 }
+
 .domain {
-  font-size: 12px; color: var(--text-dim); margin: 2px 0 0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  opacity: 0.8;
+  font-size: 11px; 
+  color: var(--text-dim); 
+  margin: 3px 0 0;
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  opacity: 0.7;
 }
 
 /* 모바일: 카드 여백을 살짝 줄여 한 화면에 더 많은 항목이 보이도록(가독성은 유지) */
 @media (max-width: 640px) {
-  .card { padding: 13px; gap: 10px; }
+  .card { padding: 14px; gap: 12px; }
 }
+

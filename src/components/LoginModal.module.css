@@ -1,24 +1,123 @@
 .overlay {
-  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
-  display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 16px;
 }
+
 .sheet {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-  padding: 24px; width: 100%; max-width: 360px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.title { margin: 0 0 4px; font-size: 18px; }
-.hint { margin: 0 0 16px; font-size: 13px; color: var(--text-dim); }
-.form { display: flex; flex-direction: column; gap: 10px; }
+
+.title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.hint {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .input {
-  padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
-  background: var(--bg); color: var(--text);
-  /* iOS Safari는 16px 미만 입력창 포커스 시 화면을 자동 확대함 → 16px로 확대 차단 */
-  font-size: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+  transition: var(--transition);
 }
-.error { margin: 0; font-size: 13px; color: #ff6b6b; }
-.actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+}
+
+[data-theme='dark'] .input:focus {
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: #ff453a;
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .ghost, .primary {
-  padding: 8px 14px; border-radius: 10px; font-size: 14px; cursor: pointer; border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition);
 }
-.ghost { background: transparent; color: var(--text-dim); }
-.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+.ghost {
+  background: rgba(118, 118, 128, 0.08);
+  color: var(--text-dim);
+}
+
+.ghost:hover {
+  background: rgba(118, 118, 128, 0.12);
+  color: var(--text);
+}
+
+.primary {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.primary:hover {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.primary:active {
+  transform: scale(0.96);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
