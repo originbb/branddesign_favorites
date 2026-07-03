@@ -9,7 +9,8 @@
   z-index: 30;
   display: flex;
   align-items: center;
-  gap: 8px;
+  /* 세 버튼(☀️/+ 내 링크/⋮)이 나란히 놓여도 붙어 보이지 않도록 간격 확보 */
+  gap: 12px;
 }
 .addBtn {
   padding: 6px 14px; border-radius: 980px; border: 1px solid var(--text);
@@ -19,7 +20,31 @@
   padding: 6px 14px; border-radius: 980px; border: 1px solid var(--border);
   background: var(--surface); color: var(--text-dim); font-size: 13px; cursor: pointer; white-space: nowrap;
 }
+/* ⋮ 계정 메뉴: PIN 변경/로그아웃을 접어 헤더를 정리 */
+.menuWrap { position: relative; display: flex; flex-shrink: 0; }
+.iconBtn {
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  border-radius: 999px; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s ease;
+}
+.iconBtn:hover { color: var(--text); }
+/* 바깥 클릭 시 닫히도록 화면 전체를 덮는 투명 레이어 (메뉴보다 아래) */
+.menuBackdrop { position: fixed; inset: 0; z-index: 40; }
+.menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 41;
+  min-width: 140px; padding: 4px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  display: flex; flex-direction: column;
+}
+.menuItem {
+  padding: 8px 12px; border: none; border-radius: 8px; background: transparent;
+  color: var(--text); font-size: 13px; text-align: left; cursor: pointer; white-space: nowrap;
+}
+.menuItem:hover { background: var(--bg); }
 .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 16px; }
+/* 편집 도구(카테고리 관리·숨긴 항목)를 검색/탭과 분리해 별도 줄로 묶어 위계를 명확히 */
+.toolRow { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .tip { margin: 22px 0 0; font-size: 12px; color: var(--text-dim); }
 .empty { color: var(--text-dim); text-align: center; padding: 64px 0; }
 .grid {
@@ -35,7 +60,7 @@
 .catManageRow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .catInput {
   padding: 6px 12px; border-radius: 980px; border: 1px solid var(--border);
-  background: var(--bg); color: var(--text); font-size: 13px; min-width: 140px;
+  background: var(--bg); color: var(--text); font-size: 16px; min-width: 140px;
 }
 .catList { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .catChip {
@@ -62,4 +87,14 @@
 .sheet {
   background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
   padding: 24px; width: 100%; max-width: 420px;
+}
+
+/* 모바일: 헤더~본문 사이 수직 여백을 압축해 첫 카드가 더 빨리 보이도록 */
+@media (max-width: 640px) {
+  .page { padding: 28px 16px 48px; }
+  .header { margin-bottom: 12px; }
+  .controls { gap: 10px; margin-top: 10px; }
+  .toolRow { margin-top: 2px; }
+  .tip { margin-top: 10px; }
+  .grid { margin-top: 12px; }
 }

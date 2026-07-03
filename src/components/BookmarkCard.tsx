@@ -37,12 +37,11 @@ export function BookmarkCard({
 
   return (
     <a
-      className={`${styles.card} ${categoryName ? styles.hasBadge : ""}`}
+      className={styles.card}
       href={bookmark.url}
       target="_blank"
       rel="noopener noreferrer"
     >
-      {categoryName && <span className={styles.badge}>{categoryName}</span>}
       {failed ? (
         <span className={styles.faviconFallback} aria-hidden="true">
           {hostname.replace(/^www\./, "").charAt(0) || "?"}
@@ -70,7 +69,10 @@ export function BookmarkCard({
         />
       )}
       <div className={styles.body}>
-        <p className={styles.title}>{bookmark.title}</p>
+        <div className={styles.titleRow}>
+          <p className={styles.title}>{bookmark.title}</p>
+          {categoryName && <span className={styles.badge}>{categoryName}</span>}
+        </div>
         {bookmark.description && <p className={styles.desc}>{bookmark.description}</p>}
         <p className={styles.domain}>{domainOf(bookmark.url)}</p>
       </div>

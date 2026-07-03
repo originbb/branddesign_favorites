@@ -5,7 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import type { Category } from "@/lib/types";
 
 export function SortableCategoryChip({
-  category, sortableId, isPersonal, onDelete, onRename,
+  category, sortableId, isPersonal, onDelete, onRename, onHide,
 }: {
   category: Category;
   /** 명시적 DnD id. 미지정 시 `cat-{id}` 사용 (ManageBoard 호환) */
@@ -15,6 +15,8 @@ export function SortableCategoryChip({
   // 팀 공유 카테고리는 순서만 바꾸므로 생략 가능(있으면 이름변경/삭제 노출)
   onDelete?: (id: number) => void;
   onRename?: (id: number, name: string) => void;
+  /** 팀 공유 카테고리 전용: 내 보드에서 숨기기(🙈) 버튼 노출 */
+  onHide?: (id: number) => void;
 }) {
   const editable = !!onRename;
   const [editing, setEditing] = useState(false);
@@ -92,6 +94,14 @@ export function SortableCategoryChip({
           aria-label="카테고리 삭제"
           style={{ border: "none", background: "transparent", color: "var(--text-dim)", padding: 0 }}
         >✕</button>
+      )}
+      {onHide && (
+        <button type="button"
+          onClick={() => onHide(category.id)}
+          aria-label="카테고리 숨기기"
+          title="내 보드에서 숨기기 (탭과 그 안의 즐겨찾기 함께)"
+          style={{ border: "none", background: "transparent", color: "var(--text-dim)", cursor: "pointer", padding: 0 }}
+        >🙈</button>
       )}
     </span>
   );

@@ -49,3 +49,8 @@
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
+
+/* 모바일: 타이틀 상하 여백을 줄여 본문을 위로 끌어올림 */
+@media (max-width: 640px) {
+  .container { margin: 14px 0; }
+}

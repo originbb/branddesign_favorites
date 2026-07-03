@@ -1,7 +1,9 @@
 .input {
-  width: 100%; max-width: 320px; padding: 10px 16px;
+  width: 100%; max-width: 240px; padding: 10px 16px;
   border-radius: 980px; border: 1px solid var(--border);
-  background: var(--surface); color: var(--text); font-size: 14px;
+  background: var(--surface); color: var(--text);
+  /* iOS 포커스 확대 방지를 위해 16px 유지 */
+  font-size: 16px;
 }
 .input::placeholder { color: var(--text-dim); }
 .input:focus { outline: 2px solid var(--accent); outline-offset: 0; }

@@ -32,7 +32,7 @@ export function ThemeToggle() {
         justifyContent: "center",
         cursor: "pointer",
         transition: "all 0.2s ease",
-        marginRight: 12,
+        flexShrink: 0,
       }}
     >
       {resolvedTheme === "dark" ? <Moon size={18} /> : <Sun size={18} />}

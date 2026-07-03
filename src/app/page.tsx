@@ -7,6 +7,7 @@ import { listPersonalCategories } from "@/lib/personalCategories";
 import { listCategoriesForProfile } from "@/lib/categories";
 import { loadUnifiedCategoryOrder, mergeUnifiedOrder } from "@/lib/categoryOrder";
 import { listHiddenSharedIds } from "@/lib/hiddenShared";
+import { listHiddenCategoryIds } from "@/lib/hiddenCategories";
 import { getCachedBoard } from "@/lib/boardCache";
 import { orderCards } from "@/lib/personalBoard";
 import nextDynamic from "next/dynamic";
@@ -32,7 +33,7 @@ export default async function Home() {
 
   if (pid) {
     // 로그인 사용자: 공유 데이터(캐시) + 개인 데이터를 한 번에 동시 요청 → 왕복 1회로 단축
-    const [board, profile, personal, personalCategories, profileCategories, savedOrder, hiddenIds] = await Promise.all([
+    const [board, profile, personal, personalCategories, profileCategories, savedOrder, hiddenIds, hiddenCatIds] = await Promise.all([
       getCachedBoard(),
       getProfile(pid),
       listPersonalBookmarks(pid),
@@ -40,20 +41,31 @@ export default async function Home() {
       listCategoriesForProfile(pid),
       loadUnifiedCategoryOrder(pid),
       listHiddenSharedIds(pid),
+      listHiddenCategoryIds(pid),
     ]);
     if (profile) {
-      // 내가 숨긴 공유 즐겨찾기는 보드에서 제외하고, 복원 UI용으로 따로 전달
       const hidden = new Set(hiddenIds);
-      const visibleShared = board.bookmarks.filter((b) => !hidden.has(b.id));
+      const hiddenCats = new Set(hiddenCatIds);
+      // 숨긴 공유 카테고리는 탭 목록에서 빼고, 복원 UI용으로 따로 전달
+      const visibleSharedCats = profileCategories.filter((c) => !hiddenCats.has(c.id));
+      const hiddenCategories = profileCategories.filter((c) => hiddenCats.has(c.id));
+      // 숨긴 카테고리에 속한 건 종류(공유/개인) 무관하게 모두 숨긴다.
+      const inHiddenCat = (categoryId: number | null) => categoryId != null && hiddenCats.has(categoryId);
+      // 공유 즐겨찾기: 개별 숨김 + 숨긴 카테고리 소속 제외
+      const visibleShared = board.bookmarks.filter((b) => !hidden.has(b.id) && !inHiddenCat(b.categoryId));
+      // 개인 즐겨찾기: 숨긴 공유 카테고리에 속하면 함께 제외 (카테고리 복원 시 다시 나타남)
+      const visiblePersonal = personal.filter((b) => !inHiddenCat(b.categoryId));
+      // 개별 숨김 복원 목록엔 '카테고리 숨김'으로 사라진 건 넣지 않음(카테고리 복원 시 함께 돌아오므로)
       const hiddenShared = board.bookmarks.filter((b) => hidden.has(b.id));
-      const cards = orderCards(visibleShared, personal, profile.orderKeys);
-      const initialUnified = mergeUnifiedOrder(profileCategories, personalCategories, savedOrder);
+      const cards = orderCards(visibleShared, visiblePersonal, profile.orderKeys);
+      const initialUnified = mergeUnifiedOrder(visibleSharedCats, personalCategories, savedOrder);
       return (
         <PersonalBoardView
           profileName={profile.name}
           initialCards={cards}
           initialUnified={initialUnified}
           initialHiddenShared={hiddenShared}
+          initialHiddenCategories={hiddenCategories}
         />
       );
     }

@@ -59,3 +59,12 @@ CREATE TABLE IF NOT EXISTS personal_hidden_shared (
 );
 
 CREATE INDEX IF NOT EXISTS idx_personal_hidden_shared_profile ON personal_hidden_shared(profile_id);
+
+-- 개인 모드에서 팀 공유 카테고리를 '내 보드에서만' 숨김 (탭 + 그 안의 공유 즐겨찾기 함께)
+CREATE TABLE IF NOT EXISTS personal_hidden_categories (
+  profile_id  INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+  PRIMARY KEY (profile_id, category_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_personal_hidden_categories_profile ON personal_hidden_categories(profile_id);

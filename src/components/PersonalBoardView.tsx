@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useMemo, useState, useId } from "react";
 import { useRouter } from "next/navigation";
+import { MoreVertical } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import type { Bookmark, UnifiedEntry } from "@/lib/types";
+import type { Bookmark, Category, UnifiedEntry } from "@/lib/types";
 import type { Card } from "@/lib/personalBoard";
 import { BookmarkForm, type BookmarkFormValue } from "./BookmarkForm";
 import { CategoryTabs } from "./CategoryTabs";
@@ -18,12 +19,13 @@ import { useDialog } from "./DialogProvider";
 import styles from "./PersonalBoardView.module.css";
 
 export function PersonalBoardView({
-  profileName, initialCards, initialUnified, initialHiddenShared,
+  profileName, initialCards, initialUnified, initialHiddenShared, initialHiddenCategories,
 }: {
   profileName: string;
   initialCards: Card[];
   initialUnified: UnifiedEntry[];
   initialHiddenShared: Bookmark[];
+  initialHiddenCategories: Category[];
 }) {
   const router = useRouter();
   const { showAlert, showConfirm, showPrompt } = useDialog();
@@ -31,18 +33,21 @@ export function PersonalBoardView({
   const [cards, setCards] = useState<Card[]>(initialCards);
   const [unified, setUnified] = useState<UnifiedEntry[]>(initialUnified);
   const [hiddenShared, setHiddenShared] = useState<Bookmark[]>(initialHiddenShared);
+  const [hiddenCategories, setHiddenCategories] = useState<Category[]>(initialHiddenCategories);
   const [active, setActive] = useState<string>("all"); // "all" | "s{id}" | "p{id}"
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Card | null>(null);
   const [showCatManage, setShowCatManage] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [newCat, setNewCat] = useState("");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => { setCards(initialCards); }, [initialCards]);
   useEffect(() => { setUnified(initialUnified); }, [initialUnified]);
   useEffect(() => { setHiddenShared(initialHiddenShared); }, [initialHiddenShared]);
+  useEffect(() => { setHiddenCategories(initialHiddenCategories); }, [initialHiddenCategories]);
 
   // 개별 목록 (필터링·폼 등에서 사용)
   const sharedCats = useMemo(() => unified.filter((e) => e.kind === "s").map((e) => e.cat), [unified]);
@@ -193,6 +198,38 @@ export function PersonalBoardView({
     }
   }
 
+  // 팀 공유 카테고리를 내 보드에서 숨김 (탭 + 그 안의 공유 즐겨찾기 함께). 다른 팀원엔 영향 없음.
+  async function hideCategory(id: number) {
+    const cat = unified.find((e) => e.kind === "s" && e.cat.id === id)?.cat;
+    if (!(await showConfirm(`"${cat?.name ?? "이 카테고리"}"를 내 보드에서 숨길까요?\n탭과 그 안의 공유 즐겨찾기가 함께 사라져요. (다른 팀원에겐 영향 없고, 나중에 복원할 수 있어요.)`))) return;
+    const res = await fetch("/api/personal/hidden-categories", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ categoryId: id }),
+    });
+    if (res.ok) {
+      setUnified((prev) => prev.filter((e) => !(e.kind === "s" && e.cat.id === id)));
+      if (cat) setHiddenCategories((prev) => [...prev, cat]);
+      if (active === `s${id}`) setActive("all");
+      router.refresh();
+    } else {
+      await showAlert("숨기기에 실패했어요.");
+    }
+  }
+
+  // 숨긴 팀 공유 카테고리 복원 (탭과 그 안의 즐겨찾기가 함께 돌아옴)
+  async function restoreCategory(id: number) {
+    const res = await fetch("/api/personal/hidden-categories", {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ categoryId: id }),
+    });
+    if (res.ok) {
+      setHiddenCategories((prev) => prev.filter((c) => c.id !== id));
+      router.refresh();
+    } else {
+      await showAlert("복원에 실패했어요.");
+    }
+  }
+
   // 카테고리 관리에서 공유+개인 통합 드래그 순서 변경
   async function onCategoryDragEnd(e: DragEndEvent) {
     const { active: a, over } = e;
@@ -246,10 +283,26 @@ export function PersonalBoardView({
         <ParticleText text={particleText} />
         <div className={styles.headActions}>
           <ThemeToggle />
-          <button type="button" className={styles.ghostBtn} onClick={changePin}>PIN 변경</button>
           <button type="button" className={styles.addBtn}
             onClick={() => { setEditing(null); setShowForm(true); }}>+ 내 링크</button>
-          <button type="button" className={styles.ghostBtn} onClick={logout}>로그아웃</button>
+          <div className={styles.menuWrap}>
+            <button type="button" className={styles.iconBtn}
+              aria-label="계정 메뉴" aria-haspopup="menu" aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((v) => !v)}>
+              <MoreVertical size={18} />
+            </button>
+            {menuOpen && (
+              <>
+                <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
+                <div className={styles.menu} role="menu">
+                  <button type="button" role="menuitem" className={styles.menuItem}
+                    onClick={() => { setMenuOpen(false); changePin(); }}>PIN 변경</button>
+                  <button type="button" role="menuitem" className={styles.menuItem}
+                    onClick={() => { setMenuOpen(false); logout(); }}>로그아웃</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
         <div className={styles.controls}>
           <CategoryTabs
@@ -258,16 +311,18 @@ export function PersonalBoardView({
             onSelect={setActive}
           />
           <SearchBar value={query} onChange={setQuery} />
-          <button type="button" className={styles.ghostBtn}
-            onClick={() => setShowCatManage((v) => !v)}>
-            {showCatManage ? "카테고리 닫기" : "★ 카테고리 관리"}
-          </button>
-          {hiddenShared.length > 0 && (
+          <div className={styles.toolRow}>
             <button type="button" className={styles.ghostBtn}
-              onClick={() => setShowHidden((v) => !v)}>
-              {showHidden ? "숨긴 항목 닫기" : `🙈 숨긴 즐겨찾기 ${hiddenShared.length}`}
+              onClick={() => setShowCatManage((v) => !v)}>
+              {showCatManage ? "카테고리 닫기" : "★ 카테고리 관리"}
             </button>
-          )}
+            {hiddenShared.length > 0 && (
+              <button type="button" className={styles.ghostBtn}
+                onClick={() => setShowHidden((v) => !v)}>
+                {showHidden ? "숨긴 항목 닫기" : `🙈 숨긴 즐겨찾기 ${hiddenShared.length}`}
+              </button>
+            )}
+          </div>
         </div>
 
         {showCatManage && (
@@ -301,12 +356,30 @@ export function PersonalBoardView({
                           isPersonal={e.kind === "p"}
                           onDelete={e.kind === "p" ? removeCategory : undefined}
                           onRename={e.kind === "p" ? renameCategory : undefined}
+                          onHide={e.kind === "s" ? hideCategory : undefined}
                         />
                       );
                     })}
                   </div>
                 </SortableContext>
               </DndContext>
+            )}
+            {hiddenCategories.length > 0 && (
+              <>
+                <p className={styles.catSectionTitle} style={{ marginTop: 16 }}>
+                  숨긴 공유 카테고리 · 복원하면 탭과 그 안의 즐겨찾기가 함께 돌아와요
+                </p>
+                <div className={styles.catList}>
+                  {hiddenCategories.map((c) => (
+                    <span key={c.id} className={styles.catChip}>
+                      <span className={styles.catChipName}>{c.name}</span>
+                      <button type="button" className={styles.catChipDel}
+                        onClick={() => restoreCategory(c.id)}
+                        aria-label="카테고리 복원" title="복원">↩</button>
+                    </span>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
@@ -330,7 +403,7 @@ export function PersonalBoardView({
         )}
 
         {!filtering && (
-          <p className={styles.tip}>카드를 드래그해 순서를 바꿀 수 있어요. (전체 보기에서만)</p>
+          <p className={styles.tip}>카드의 ⠿ 핸들을 잡고 드래그하면 순서를 바꿀 수 있어요. (전체 보기에서만)</p>
         )}
       </header>
 
