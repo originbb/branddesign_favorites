@@ -5,7 +5,12 @@ import { validName, validPin } from "@/lib/validation";
 import { hashPin, verifyPin } from "@/lib/pin";
 import { signProfile, SESSION_MAX_AGE } from "@/lib/session";
 import { findByNameKey, createProfile } from "@/lib/profiles";
-import { rateLimit, resetRateLimit } from "@/lib/rateLimit";
+import { hitRateLimit, checkLock, recordFailure, clearFailures } from "@/lib/loginGuard";
+
+const tooMany = (retryAfterSec: number, msg: string) =>
+  NextResponse.json({ error: msg }, {
+    status: 429, headers: { "Retry-After": String(retryAfterSec) },
+  });
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -19,42 +24,42 @@ export async function POST(request: Request) {
   }
 
   const nameKey = name.toLowerCase();
-
-  // 무차별 대입 방지 ①: IP별 5분당 30회 제한(이름을 바꿔가며 시도하는 것까지 차단).
-  // x-forwarded-for 맨 앞 IP를 사용(Vercel이 신뢰 프록시로서 세팅).
   const ip = (request.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
-  const ipRl = rateLimit(`login-ip:${ip}`, 30, 5 * 60 * 1000);
+
+  // 무차별 대입 방어(모든 인스턴스 공유 = Postgres). 서로 독립이라 동시에 조회.
+  //  ① IP별 5분당 30회 제한 — 이름을 바꿔가며 하는 시도까지 차단
+  //  ② 이름 계정 잠금 — 연속 실패 5회면 15분 잠금
+  //  ③ 프로필 조회
+  const [ipRl, lock, existing] = await Promise.all([
+    hitRateLimit(`ip:${ip}`, 30, 5 * 60),
+    checkLock(nameKey),
+    findByNameKey(nameKey),
+  ]);
+
+  if (lock.locked) {
+    return tooMany(lock.retryAfterSec, "연속된 실패로 계정이 잠겼습니다. 잠시 후 다시 시도해주세요.");
+  }
   if (!ipRl.ok) {
-    return NextResponse.json(
-      { error: "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요." },
-      { status: 429, headers: { "Retry-After": String(ipRl.retryAfterSec) } },
-    );
+    return tooMany(ipRl.retryAfterSec, "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.");
   }
 
-  // 무차별 대입 방지 ②: 이름별 5분당 10회 제한
-  const rlKey = `login:${nameKey}`;
-  const rl = rateLimit(rlKey, 10, 5 * 60 * 1000);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요." },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
-    );
-  }
+  // PIN 불일치 처리: 실패 기록 후 401
+  const fail = async () => {
+    await recordFailure(nameKey);
+    return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
+  };
 
   let profileId: number;
-  const existing = await findByNameKey(nameKey);
   let mustChange = false;
 
   if (existing) {
     if (existing.pinHash.startsWith("MUST_CHANGE:")) {
       const realHash = existing.pinHash.slice("MUST_CHANGE:".length);
-      if (!verifyPin(pin, realHash)) {
-        return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
-      }
+      if (!verifyPin(pin, realHash)) return fail();
       mustChange = true;
       profileId = existing.id;
     } else if (!verifyPin(pin, existing.pinHash)) {
-      return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
+      return fail();
     } else {
       profileId = existing.id;
     }
@@ -70,21 +75,19 @@ export async function POST(request: Request) {
       }
       if (retry.pinHash.startsWith("MUST_CHANGE:")) {
         const realHash = retry.pinHash.slice("MUST_CHANGE:".length);
-        if (!verifyPin(pin, realHash)) {
-          return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
-        }
+        if (!verifyPin(pin, realHash)) return fail();
         mustChange = true;
         profileId = retry.id;
       } else if (!verifyPin(pin, retry.pinHash)) {
-        return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
+        return fail();
       } else {
         profileId = retry.id;
       }
     }
   }
 
-  // 인증 성공 → 해당 이름의 시도 카운터 초기화
-  resetRateLimit(rlKey);
+  // 인증 성공 → 해당 이름의 실패 카운트/잠금 해제
+  await clearFailures(nameKey);
 
   const store = await cookies();
   store.set(PROFILE_COOKIE, signProfile(profileId), {
