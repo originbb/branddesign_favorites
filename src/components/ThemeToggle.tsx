@@ -22,7 +22,7 @@ export function ThemeToggle() {
       aria-label="테마 변경"
       style={{
         background: "var(--surface)",
-        border: "1px solid var(--border)",
+        border: resolvedTheme === "dark" ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0, 0, 0, 0.12)",
         color: "var(--text)",
         borderRadius: "50%",
         width: 36,

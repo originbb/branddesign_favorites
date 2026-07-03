@@ -17,29 +17,41 @@
 }
 
 :root {
-  --bg: #f5f5f7;
-  --surface: #ffffff;
+  --bg-color: #f5f5f7;
+  --bg: radial-gradient(circle at 0% 0%, rgba(255, 230, 245, 0.5) 0%, transparent 50%),
+        radial-gradient(circle at 100% 0%, rgba(210, 235, 255, 0.5) 0%, transparent 50%),
+        radial-gradient(circle at 50% 100%, rgba(230, 250, 255, 0.4) 0%, transparent 50%),
+        #f5f5f7;
+  /* 유리에 빛이 반사되는 느낌을 위한 선형 그라데이션 */
+  --surface: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.3) 100%);
   --text: #1d1d1f;
   --text-dim: #86868b;
-  --border: rgba(0, 0, 0, 0.08);
+  --border: rgba(255, 255, 255, 0.8);
   --accent: #0071e3;
   --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 16px;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-hover: 0 12px 30px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03);
-  --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --radius: 16px;
+  --radius-lg: 20px;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-hover: 0 16px 32px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
+  --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  --glass-blur: blur(28px);
 }
 
 [data-theme='dark'] {
-  --bg: #0d0d0d;
-  --surface: #1c1c1e;
+  /* 훨씬 더 깊고 어두운 완전한 블랙 기반 배경 */
+  --bg-color: #000000;
+  --bg: radial-gradient(circle at 0% 0%, rgba(40, 20, 80, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 100% 0%, rgba(10, 40, 90, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 50% 100%, rgba(10, 60, 70, 0.1) 0%, transparent 50%),
+        #000000;
+  /* 어두운 유리 느낌 (빛 반사 강조) */
+  --surface: linear-gradient(135deg, rgba(60, 60, 65, 0.25) 0%, rgba(20, 20, 22, 0.1) 100%);
   --text: #f5f5f7;
   --text-dim: #86868b;
-  --border: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.12);
   --accent: #0a84ff;
-  --shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  --shadow-hover: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 20px 48px rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -49,13 +61,17 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
+  background-color: var(--bg-color);
+  background-image: var(--bg);
+  background-attachment: fixed;
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-    "Segoe UI", Roboto, "Helvetica Neue", "Apple SD Gothic Neo", "Pretendard",
-    system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Inter", "Pretendard", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  letter-spacing: -0.015em;
+  word-spacing: 0.05em;
 }
 
 a { color: inherit; text-decoration: none; }

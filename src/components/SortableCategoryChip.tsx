@@ -57,7 +57,7 @@ export function SortableCategoryChip({
         aria-label="카테고리 이동"
         style={{ border: "none", background: "transparent", color: "var(--text-dim)", cursor: "grab", padding: 0 }}
       >⠿</button>
-      {isPersonal && <span aria-hidden style={{ fontSize: 11, opacity: 0.6 }}>★</span>}
+      {/* 개인 카테고리 별표 뱃지 제거 */}
       {editing ? (
         <input
           autoFocus

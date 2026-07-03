@@ -314,7 +314,7 @@ export function PersonalBoardView({
           <div className={styles.toolRow}>
             <button type="button" className={styles.ghostBtn}
               onClick={() => setShowCatManage((v) => !v)}>
-              {showCatManage ? "카테고리 닫기" : "★ 카테고리 관리"}
+              {showCatManage ? "카테고리 닫기" : "카테고리 관리"}
             </button>
             {hiddenShared.length > 0 && (
               <button type="button" className={styles.ghostBtn}

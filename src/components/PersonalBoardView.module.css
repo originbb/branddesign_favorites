@@ -273,14 +273,7 @@
   font-size: 13px;
 }
 
-.catChip::before {
-  content: "★";
-  color: #ff9500;
-}
-
-[data-theme='dark'] .catChip::before {
-  color: #ff9f0a;
-}
+/* 개인 카테고리 칩 별표 뱃지 제거 */
 
 .catChipName {
   background: none;

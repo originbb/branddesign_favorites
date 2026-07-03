@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { Bookmark, Category } from "@/lib/types";
 import { filterBookmarks } from "@/lib/search";
 import { BookmarkCard } from "./BookmarkCard";
@@ -13,7 +13,7 @@ import styles from "./BoardView.module.css";
 export function BoardView({
   bookmarks, categories,
 }: { bookmarks: Bookmark[]; categories: Category[] }) {
-  const [active, setActive] = useState<string>("all"); // "all" | "s{id}"
+  const [active, setActive] = useState<string>("all");
   const [query, setQuery] = useState("");
   const [showLogin, setShowLogin] = useState(false);
 
@@ -32,9 +32,7 @@ export function BoardView({
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        {/* 메인 카피: 일반 흐름. 스크롤 시 콘텐츠와 함께 자연스럽게 위로 사라짐(별도 효과 없음) */}
         <ParticleText text="FAVORITES" />
-        {/* 버튼은 fixed로 분리해 항상 상단 우측에 보임(패럴랙스 영향 없음) */}
         <div className={styles.headActions}>
           <ThemeToggle />
           <button

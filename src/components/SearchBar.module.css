@@ -4,8 +4,10 @@
   align-items: center;
   width: 100%;
   max-width: 240px;
-  background: rgba(118, 118, 128, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.02);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-radius: 10px;
   padding: 0 10px;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -18,12 +20,13 @@
 }
 
 .wrapper:focus-within {
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.8);
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
 }
 
 [data-theme='dark'] .wrapper:focus-within {
+  background: rgba(40, 40, 42, 0.8);
   box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
 }
 

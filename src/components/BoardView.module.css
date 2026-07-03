@@ -16,19 +16,21 @@
   z-index: 30;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: var(--glass-bg, rgba(255, 255, 255, 0.7));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  padding: 4px;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: 6px;
   border-radius: 99px;
-  border: 1px solid var(--border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   transition: var(--transition);
 }
 
 [data-theme='dark'] .headActions {
-  background: rgba(28, 28, 30, 0.75);
+  background: rgba(30, 30, 32, 0.85);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .h1 {
@@ -46,16 +48,24 @@
 }
 
 .loginBtn {
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: 99px;
-  border: 1px solid transparent;
-  background: var(--text);
-  color: var(--bg);
+  border: none;
+  background: transparent;
+  color: var(--text);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: var(--transition);
+  transition: all 0.2s ease;
+}
+
+.loginBtn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .loginBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .loginBtn:hover {
@@ -93,7 +103,6 @@
 @media (max-width: 768px) {
   .controls {
     grid-template-columns: 1fr;
-    gap: 12px;
   }
   .headActions {
     top: 12px;
@@ -101,3 +110,21 @@
   }
 }
 
+@media (max-width: 640px) {
+  .page {
+    padding: 24px 20px calc(40px + env(safe-area-inset-bottom));
+  }
+  .header {
+    margin-bottom: 20px;
+    padding-top: 48px; /* 버튼과 타이틀 겹침 방지 */
+  }
+  .controls {
+    margin-top: 20px;
+    gap: 16px;
+  }
+  .grid {
+    margin-top: 20px;
+    gap: 12px;
+    grid-template-columns: 1fr;
+  }
+}

@@ -215,6 +215,7 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
         capA = refAscentAt(fontSize);
       }
       fontSize = Math.max(fontSize, 40); // 하한선
+      fontSize *= 0.9; // 요청에 따라 90% 크기로 축소
       capA = refAscentAt(fontSize);
       const totalWidth = measureTotal(fontSize);
       ctx.textAlign = "left";
@@ -238,9 +239,10 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
       const textData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       ctx.clearRect(0, 0, rect.width, rect.height);
 
-      // 다크모드 여부에 따라 파티클 색상 결정 (next-themes 사용)
+      // 다크모드 여부에 따라 파티클 그라데이션 색상 결정 (다크모드는 더 어두운 티타늄 그레이톤)
       const isDarkMode = resolvedTheme === "dark";
-      const color = isDarkMode ? "#8a8a8f" : "#1d1d1f"; // 다크모드 타이틀을 살짝 어둡게(은은하게)
+      const c1 = isDarkMode ? [150, 150, 155] : [140, 140, 145]; // 좌측 상단
+      const c2 = isDarkMode ? [60, 60, 65] : [29, 29, 31];    // 우측 하단
       
       // 픽셀 간격(gap)과 점 크기를 줄여서 훨씬 더 촘촘하고 섬세하게 표현
       const gap = 4 * dpr;
@@ -257,8 +259,14 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
             if (x > maxPx) maxPx = x;
             if (y < minPy) minPy = y;
             if (y > maxPy) maxPy = y;
+            // 좌표에 따른 그라데이션 보간 (좌측 0.0 ~ 우측 1.0)
+            const ratio = Math.max(0, Math.min(1, x / textData.width));
+            const r = Math.round(c1[0] * (1 - ratio) + c2[0] * ratio);
+            const g = Math.round(c1[1] * (1 - ratio) + c2[1] * ratio);
+            const b = Math.round(c1[2] * (1 - ratio) + c2[2] * ratio);
+            const particleColor = `rgb(${r},${g},${b})`;
             // 논리적 픽셀 좌표로 변환하여 저장
-            particles.push(new Particle(x / dpr, y / dpr, color, size / dpr));
+            particles.push(new Particle(x / dpr, y / dpr, particleColor, size / dpr));
           }
         }
       }
