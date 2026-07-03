@@ -4,12 +4,12 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://branddesign-favorites.vercel.app"),
   title: "즐겨찾기함",
-  description: "팀이 함께 보는 즐겨찾기함",
+  description: "필요한 링크 모음 배포, 나만의 방식으로 구성",
   // og:image / twitter:image 는 app/opengraph-image.jpg · app/twitter-image.jpg
   // 파일 규약으로 Next.js가 자동 주입한다(절대 URL은 metadataBase 기준).
   openGraph: {
     title: "즐겨찾기함",
-    description: "팀이 함께 보는 즐겨찾기함",
+    description: "필요한 링크 모음 배포, 나만의 방식으로 구성",
     siteName: "브랜드전략디자인팀 즐겨찾기",
     type: "website",
     locale: "ko_KR",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "즐겨찾기함",
-    description: "팀이 함께 보는 즐겨찾기함",
+    description: "필요한 링크 모음 배포, 나만의 방식으로 구성",
   },
 };
 
