@@ -73,9 +73,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    // /manage 및 모든 API 라우트 매칭
-    "/manage",
-    "/api/:path*"
-  ]
+  // 정적 에셋을 제외한 모든 경로에서 실행 → 첫 페이지 로드 때 csrf_token 쿠키가 발급되어야
+  // 이후 로그인 등 상태변경 POST의 CSRF 검증이 통과된다. (/manage·/api 로직은 내부 분기로 처리)
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|fonts/).*)"],
 };

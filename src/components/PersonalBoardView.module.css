@@ -2,7 +2,15 @@
 .header { margin-bottom: 20px; }
 .titleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .h1 { font-size: 22px; margin: 0; }
-.headActions { display: flex; gap: 8px; }
+.headActions {
+  position: fixed;
+  top: 12px;
+  right: max(24px, calc((100vw - 1120px) / 2 + 24px));
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .addBtn {
   padding: 6px 14px; border-radius: 980px; border: 1px solid var(--text);
   background: var(--text); color: var(--bg); font-size: 13px; cursor: pointer; white-space: nowrap;
