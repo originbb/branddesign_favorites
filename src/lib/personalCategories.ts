@@ -48,3 +48,16 @@ export async function deletePersonalCategory(
   `) as { id: number }[];
   return rows.length > 0;
 }
+
+// 개인 카테고리 순서 변경. 소유권 보호를 위해 profile_id 조건을 함께 건다
+// (남의 카테고리 id를 섞어 보내도 그 행은 갱신되지 않음).
+export async function reorderPersonalCategories(
+  profileId: number, ids: number[],
+): Promise<void> {
+  if (ids.length === 0) return;
+  await sql.transaction(
+    ids.map((id, i) =>
+      sql`UPDATE personal_categories SET sort_order = ${i} WHERE id = ${id} AND profile_id = ${profileId}`,
+    ),
+  );
+}

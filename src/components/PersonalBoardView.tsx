@@ -4,13 +4,14 @@ import { useRouter } from "next/navigation";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
 } from "@dnd-kit/core";
-import { SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, arrayMove, rectSortingStrategy, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Category } from "@/lib/types";
 import type { Card } from "@/lib/personalBoard";
 import { BookmarkForm, type BookmarkFormValue } from "./BookmarkForm";
 import { CategoryTabs } from "./CategoryTabs";
 import { SearchBar } from "./SearchBar";
 import { PersonalSortableCard } from "./PersonalSortableCard";
+import { SortableCategoryChip } from "./SortableCategoryChip";
 import { ParticleText } from "./ParticleText";
 import { ThemeToggle } from "./ThemeToggle";
 import { useDialog } from "./DialogProvider";
@@ -134,17 +135,37 @@ export function PersonalBoardView({
     }
   }
 
-  async function renameCategory(id: number, current: string) {
-    const name = (await showPrompt("카테고리 이름", current))?.trim();
-    if (!name || name === current) return;
+  // 드래그 칩에서 인라인 편집한 새 이름으로 저장 (더블클릭 → 입력)
+  async function renameCategory(id: number, name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
     const res = await fetch(`/api/personal/categories/${id}`, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name: trimmed }),
     });
     if (res.ok) {
-      setPersonalCats((prev) => prev.map((c) => c.id === id ? { ...c, name } : c));
+      setPersonalCats((prev) => prev.map((c) => c.id === id ? { ...c, name: trimmed } : c));
     } else {
       await showAlert("이름 변경에 실패했어요.");
+    }
+  }
+
+  // 개인 카테고리 드래그 순서 변경 (개인 북마크 드래그와 동일한 방식)
+  async function onCategoryDragEnd(e: DragEndEvent) {
+    const { active: a, over } = e;
+    if (!over || a.id === over.id) return;
+    const oldIndex = personalCats.findIndex((c) => `cat-${c.id}` === a.id);
+    const newIndex = personalCats.findIndex((c) => `cat-${c.id}` === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const next = arrayMove(personalCats, oldIndex, newIndex);
+    setPersonalCats(next);
+    const res = await fetch("/api/personal/categories/reorder", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: next.map((c) => c.id) }),
+    });
+    if (!res.ok) {
+      await showAlert("순서 저장에 실패했어요. 다시 로그인해야 할 수 있어요.");
+      router.refresh();
     }
   }
 
@@ -227,18 +248,18 @@ export function PersonalBoardView({
             {personalCats.length === 0 ? (
               <p className={styles.catEmpty}>아직 개인 카테고리가 없어요. 위에서 추가해 보세요.</p>
             ) : (
-              <div className={styles.catList}>
-                {personalCats.map((c) => (
-                  <span key={c.id} className={styles.catChip}>
-                    <button type="button" className={styles.catChipName}
-                      title="이름 변경" onClick={() => renameCategory(c.id, c.name)}>
-                      {c.name}
-                    </button>
-                    <button type="button" className={styles.catChipDel}
-                      title="삭제" onClick={() => removeCategory(c.id)}>×</button>
-                  </span>
-                ))}
-              </div>
+              <DndContext id={`${dndId}-cat`} sensors={sensors}
+                collisionDetection={closestCenter} onDragEnd={onCategoryDragEnd}>
+                <SortableContext items={personalCats.map((c) => `cat-${c.id}`)}
+                  strategy={horizontalListSortingStrategy}>
+                  <div className={styles.catList}>
+                    {personalCats.map((c) => (
+                      <SortableCategoryChip key={c.id} category={c}
+                        onDelete={removeCategory} onRename={renameCategory} />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
         )}
