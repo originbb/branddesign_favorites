@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { updateCategory, deleteCategory } from "@/lib/categories";
+import { revalidateBoard } from "@/lib/boardCache";
 
 export async function PATCH(
   request: Request,
@@ -18,6 +19,7 @@ export async function PATCH(
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   if (!name) return NextResponse.json({ error: "name required" }, { status: 400 });
   await updateCategory(numId, name);
+  revalidateBoard();
   return NextResponse.json({ ok: true });
 }
 
@@ -34,5 +36,6 @@ export async function DELETE(
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
   await deleteCategory(numId);
+  revalidateBoard();
   return NextResponse.json({ ok: true });
 }

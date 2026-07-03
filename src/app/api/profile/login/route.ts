@@ -6,7 +6,6 @@ import { hashPin, verifyPin } from "@/lib/pin";
 import { signProfile, SESSION_MAX_AGE } from "@/lib/session";
 import { findByNameKey, createProfile } from "@/lib/profiles";
 import { rateLimit, resetRateLimit } from "@/lib/rateLimit";
-import { sql } from "@/lib/db";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -21,7 +20,18 @@ export async function POST(request: Request) {
 
   const nameKey = name.toLowerCase();
 
-  // 무차별 대입 방지: 이름별 5분당 10회 제한
+  // 무차별 대입 방지 ①: IP별 5분당 30회 제한(이름을 바꿔가며 시도하는 것까지 차단).
+  // x-forwarded-for 맨 앞 IP를 사용(Vercel이 신뢰 프록시로서 세팅).
+  const ip = (request.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+  const ipRl = rateLimit(`login-ip:${ip}`, 30, 5 * 60 * 1000);
+  if (!ipRl.ok) {
+    return NextResponse.json(
+      { error: "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요." },
+      { status: 429, headers: { "Retry-After": String(ipRl.retryAfterSec) } },
+    );
+  }
+
+  // 무차별 대입 방지 ②: 이름별 5분당 10회 제한
   const rlKey = `login:${nameKey}`;
   const rl = rateLimit(rlKey, 10, 5 * 60 * 1000);
   if (!rl.ok) {

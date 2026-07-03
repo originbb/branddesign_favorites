@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { updateBookmark, deleteBookmark } from "@/lib/bookmarks";
 import { normalizeUrl, faviconUrl } from "@/lib/validation";
+import { revalidateBoard } from "@/lib/boardCache";
 
 export async function PATCH(
   request: Request,
@@ -35,6 +36,7 @@ export async function PATCH(
   await updateBookmark(numId, {
     title, url, description, faviconUrl: faviconUrl(url), categoryId,
   });
+  revalidateBoard();
   return NextResponse.json({ ok: true });
 }
 
@@ -51,5 +53,6 @@ export async function DELETE(
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
   await deleteBookmark(numId);
+  revalidateBoard();
   return NextResponse.json({ ok: true });
 }

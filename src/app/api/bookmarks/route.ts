@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { listBookmarks, createBookmark } from "@/lib/bookmarks";
 import { normalizeUrl, faviconUrl } from "@/lib/validation";
+import { revalidateBoard } from "@/lib/boardCache";
 
 export async function GET() {
   return NextResponse.json(await listBookmarks());
@@ -31,5 +32,6 @@ export async function POST(request: Request) {
   const created = await createBookmark({
     title, url, description, faviconUrl: faviconUrl(url), categoryId,
   });
+  revalidateBoard();
   return NextResponse.json(created, { status: 201 });
 }

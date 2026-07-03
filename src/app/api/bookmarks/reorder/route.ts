@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { reorderBookmarks } from "@/lib/bookmarks";
+import { revalidateBoard } from "@/lib/boardCache";
 
 export async function POST(request: Request) {
   if (!(await isAdmin())) {
@@ -13,5 +14,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "ids must be positive integers" }, { status: 400 });
   }
   await reorderBookmarks(ids);
+  revalidateBoard();
   return NextResponse.json({ ok: true });
 }

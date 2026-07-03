@@ -8,9 +8,20 @@ export const SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30일
 // 세션 서명 키. 관리자 토큰과 분리하기 위해 SESSION_SECRET 을 우선 사용하고,
 // (아직 설정 전인 배포 호환을 위해) 없으면 ADMIN_TOKEN 으로 폴백한다.
 // 운영에서는 반드시 SESSION_SECRET 을 별도로 설정할 것.
+let warnedSecretFallback = false;
 function key(): string {
-  const k = process.env.SESSION_SECRET || process.env.ADMIN_TOKEN;
+  const secret = process.env.SESSION_SECRET;
+  const k = secret || process.env.ADMIN_TOKEN;
   if (!k) throw new Error("SESSION_SECRET (or ADMIN_TOKEN) is not set");
+  // 운영에서 SESSION_SECRET 미설정 시 ADMIN_TOKEN으로 세션을 서명하게 되는데,
+  // 관리자 토큰이 유출되면 세션 위조가 가능해진다. 반드시 별도 시크릿을 설정할 것.
+  if (!secret && process.env.NODE_ENV === "production" && !warnedSecretFallback) {
+    warnedSecretFallback = true;
+    console.warn(
+      "[security] SESSION_SECRET 미설정 → ADMIN_TOKEN으로 세션 서명 중. " +
+      "운영에서는 SESSION_SECRET을 별도로 설정하세요.",
+    );
+  }
   return k;
 }
 
