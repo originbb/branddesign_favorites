@@ -29,6 +29,7 @@ export function PersonalBoardView({
   const { showAlert, showConfirm, showPrompt } = useDialog();
   const dndId = useId();
   const [cards, setCards] = useState<Card[]>(initialCards);
+  const [sharedCats, setSharedCats] = useState<Category[]>(categories);
   const [personalCats, setPersonalCats] = useState<Category[]>(initialPersonalCategories);
   const [active, setActive] = useState<string>("all"); // "all" | "s{id}" | "p{id}"
   const [query, setQuery] = useState("");
@@ -39,15 +40,16 @@ export function PersonalBoardView({
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => { setCards(initialCards); }, [initialCards]);
+  useEffect(() => { setSharedCats(categories); }, [categories]);
   useEffect(() => { setPersonalCats(initialPersonalCategories); }, [initialPersonalCategories]);
 
   // 카테고리 표시 이름 조회: 공유는 `s{id}`, 개인은 `p{id}`
   const catLabel = useMemo(() => {
     const m = new Map<string, string>();
-    for (const c of categories) m.set(`s${c.id}`, c.name);
+    for (const c of sharedCats) m.set(`s${c.id}`, c.name);
     for (const c of personalCats) m.set(`p${c.id}`, c.name);
     return m;
-  }, [categories, personalCats]);
+  }, [sharedCats, personalCats]);
 
   const q = query.trim().toLowerCase();
   const filtering = active !== "all" || q !== "";
@@ -150,6 +152,25 @@ export function PersonalBoardView({
     }
   }
 
+  // 팀 공유 카테고리 드래그 순서 변경 — '내 화면만' 반영 (profile_category_order 저장)
+  async function onSharedCategoryDragEnd(e: DragEndEvent) {
+    const { active: a, over } = e;
+    if (!over || a.id === over.id) return;
+    const oldIndex = sharedCats.findIndex((c) => `cat-${c.id}` === a.id);
+    const newIndex = sharedCats.findIndex((c) => `cat-${c.id}` === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const next = arrayMove(sharedCats, oldIndex, newIndex);
+    setSharedCats(next);
+    const res = await fetch("/api/personal/shared-categories/reorder", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: next.map((c) => c.id) }),
+    });
+    if (!res.ok) {
+      await showAlert("순서 저장에 실패했어요. 다시 로그인해야 할 수 있어요.");
+      router.refresh();
+    }
+  }
+
   // 개인 카테고리 드래그 순서 변경 (개인 북마크 드래그와 동일한 방식)
   async function onCategoryDragEnd(e: DragEndEvent) {
     const { active: a, over } = e;
@@ -223,7 +244,7 @@ export function PersonalBoardView({
         </div>
         <div className={styles.controls}>
           <CategoryTabs
-            categories={categories}
+            categories={sharedCats}
             personalCategories={personalCats}
             active={active}
             onSelect={setActive}
@@ -237,6 +258,24 @@ export function PersonalBoardView({
 
         {showCatManage && (
           <div className={styles.catManage}>
+            {/* 팀 공유 카테고리 — 순서만 내 화면 기준으로 조정 (이름변경/삭제는 관리자 전용) */}
+            {sharedCats.length > 0 && (
+              <>
+                <p className={styles.catSectionTitle}>팀 공유 카테고리 · 내 순서</p>
+                <DndContext id={`${dndId}-shared`} sensors={sensors}
+                  collisionDetection={closestCenter} onDragEnd={onSharedCategoryDragEnd}>
+                  <SortableContext items={sharedCats.map((c) => `cat-${c.id}`)}
+                    strategy={horizontalListSortingStrategy}>
+                    <div className={styles.catList}>
+                      {sharedCats.map((c) => (
+                        <SortableCategoryChip key={c.id} category={c} />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+                <p className={styles.catSectionTitle} style={{ marginTop: 16 }}>내 카테고리</p>
+              </>
+            )}
             <div className={styles.catManageRow}>
               <input className={styles.catInput} placeholder="새 카테고리 (나만 봄)"
                 value={newCat} onChange={(e) => setNewCat(e.target.value)}
@@ -293,7 +332,7 @@ export function PersonalBoardView({
           <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
             <BookmarkForm
               key={editing?.bookmark.id ?? "new"}
-              categories={categories}
+              categories={sharedCats}
               personalCategories={personalCats}
               initial={editing ? {
                 title: editing.bookmark.title, url: editing.bookmark.url,

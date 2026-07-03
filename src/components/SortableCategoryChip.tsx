@@ -8,9 +8,11 @@ export function SortableCategoryChip({
   category, onDelete, onRename,
 }: {
   category: Category;
-  onDelete: (id: number) => void;
-  onRename: (id: number, name: string) => void;
+  // 팀 공유 카테고리는 순서만 바꾸므로 생략 가능(있으면 이름변경/삭제 노출)
+  onDelete?: (id: number) => void;
+  onRename?: (id: number, name: string) => void;
 }) {
+  const editable = !!onRename;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(category.name);
   const committedRef = useRef(false);
@@ -22,7 +24,7 @@ export function SortableCategoryChip({
     if (committedRef.current) return;
     committedRef.current = true;
     setEditing(false);
-    onRename(category.id, draft);
+    onRename?.(category.id, draft);
   }
 
   return (
@@ -71,17 +73,21 @@ export function SortableCategoryChip({
         />
       ) : (
         <span
-          onDoubleClick={() => { committedRef.current = false; setDraft(category.name); setEditing(true); }}
-          style={{ cursor: "text" }}
+          onDoubleClick={editable
+            ? () => { committedRef.current = false; setDraft(category.name); setEditing(true); }
+            : undefined}
+          style={{ cursor: editable ? "text" : "default" }}
         >
           {category.name}
         </span>
       )}
-      <button type="button"
-        onClick={() => onDelete(category.id)}
-        aria-label="카테고리 삭제"
-        style={{ border: "none", background: "transparent", color: "var(--text-dim)", padding: 0 }}
-      >✕</button>
+      {onDelete && (
+        <button type="button"
+          onClick={() => onDelete(category.id)}
+          aria-label="카테고리 삭제"
+          style={{ border: "none", background: "transparent", color: "var(--text-dim)", padding: 0 }}
+        >✕</button>
+      )}
     </span>
   );
 }

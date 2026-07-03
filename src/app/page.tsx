@@ -5,7 +5,7 @@ import { getProfile } from "@/lib/profiles";
 import { listPersonalBookmarks } from "@/lib/personalBookmarks";
 import { listPersonalCategories } from "@/lib/personalCategories";
 import { listBookmarks } from "@/lib/bookmarks";
-import { listCategories } from "@/lib/categories";
+import { listCategories, listCategoriesForProfile } from "@/lib/categories";
 import { orderCards } from "@/lib/personalBoard";
 import nextDynamic from "next/dynamic";
 import { BoardView } from "@/components/BoardView";
@@ -26,16 +26,17 @@ export default async function Home() {
   if (pid) {
     const profile = await getProfile(pid);
     if (profile) {
-      const [personal, personalCategories] = await Promise.all([
+      const [personal, personalCategories, profileCategories] = await Promise.all([
         listPersonalBookmarks(pid),
         listPersonalCategories(pid),
+        listCategoriesForProfile(pid), // 팀 공유 카테고리를 이 사용자만의 순서로
       ]);
       const cards = orderCards(bookmarks, personal, profile.orderKeys);
       return (
         <PersonalBoardView
           profileName={profile.name}
           initialCards={cards}
-          categories={categories}
+          categories={profileCategories}
           initialPersonalCategories={personalCategories}
         />
       );

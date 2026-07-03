@@ -31,6 +31,7 @@
   width: 100%; margin-top: 12px; padding: 14px 16px;
   border: 1px solid var(--border); border-radius: 14px; background: var(--surface);
 }
+.catSectionTitle { margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--text-dim); }
 .catManageRow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .catInput {
   padding: 6px 12px; border-radius: 980px; border: 1px solid var(--border);
