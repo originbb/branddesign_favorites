@@ -38,17 +38,18 @@ class Particle {
     this.size = size;
   }
 
-  update(mouseX: number, mouseY: number, radius: number, t: number) {
+  update(mouseX: number, mouseY: number, radius: number, strength: number, t: number) {
     const dx = mouseX - this.x;
     const dy = mouseY - this.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     if (dist < radius) {
-      // 이미지처럼 원형 테두리 모양으로 파티클이 뭉치게 하기 위해 강력한 척력 적용
+      // 이미지처럼 원형 테두리 모양으로 파티클이 뭉치게 하기 위해 척력 적용.
+      // strength는 입력수단별로 다르다(데스크톱=강함, 터치=부드러움).
       const force = (radius - dist) / radius;
       const angle = Math.atan2(dy, dx);
-      this.vx -= Math.cos(angle) * force * 20;
-      this.vy -= Math.sin(angle) * force * 20;
+      this.vx -= Math.cos(angle) * force * strength;
+      this.vy -= Math.sin(angle) * force * strength;
     }
 
     // 상시 미세 부유: 목표 지점을 원점 주변에서 천천히 흔들어 살아있는 느낌을 줌
@@ -122,23 +123,55 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-    const mouse = { x: -1000, y: -1000, radius: 100 }; // 반경을 넓혀서 거대한 원형 공간 확보
+    // 마우스 반발(repel) 효과는 hover 가능한 정밀 포인터(데스크톱)에서만 활성화한다.
+    // 터치 기기에선 탭 시 에뮬레이트된 mousemove만 발생하고 mouseout이 안 떠서,
+    // 파티클이 크게 흩어진 채 원위치로 복원되지 않는 문제가 있어 비활성화한다.
+    const canHover =
+      typeof window !== "undefined" &&
+      !!window.matchMedia?.("(hover: hover) and (pointer: fine)").matches;
+
+    // radius=반발 반경, strength=반발 세기. 입력수단에 따라 값을 다르게 설정한다.
+    const mouse = { x: -1000, y: -1000, radius: 100, strength: 20 };
+    // 데스크톱(마우스): 넓은 반경 + 강한 척력으로 큼직한 원형 공간
+    const DESKTOP = { radius: 100, strength: 20 };
+    // 모바일(터치): 좁은 반경 + 약한 척력으로 부드럽게 반응
+    const TOUCH = { radius: 70, strength: 7 };
+
+    const reset = () => {
+      mouse.x = -1000;
+      mouse.y = -1000;
+    };
 
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       mouse.x = e.clientX - rect.left;
       mouse.y = e.clientY - rect.top;
+      mouse.radius = DESKTOP.radius;
+      mouse.strength = DESKTOP.strength;
     };
 
-    const handleMouseLeave = () => {
-      mouse.x = -1000;
-      mouse.y = -1000;
+    // 터치: 좌표를 갱신하되 부드러운 값 사용. touchend/cancel에서 반드시 리셋해
+    // 파티클이 원위치로 복원되게 한다(모바일에서 흩어진 채 고정되는 문제 해결).
+    const handleTouch = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = touch.clientX - rect.left;
+      mouse.y = touch.clientY - rect.top;
+      mouse.radius = TOUCH.radius;
+      mouse.strength = TOUCH.strength;
     };
 
-    // 모션 최소화 시엔 마우스 인터랙션도 비활성화(정적 유지)
-    if (!reduceMotion) {
+    if (!reduceMotion && canHover) {
       window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseout", handleMouseLeave);
+      window.addEventListener("mouseout", reset);
+    }
+    // 터치 인터랙션은 모션 사용자면 활성화(리셋으로 복원 보장되므로 안전)
+    if (!reduceMotion) {
+      window.addEventListener("touchstart", handleTouch, { passive: true });
+      window.addEventListener("touchmove", handleTouch, { passive: true });
+      window.addEventListener("touchend", reset, { passive: true });
+      window.addEventListener("touchcancel", reset, { passive: true });
     }
 
     const init = () => {
@@ -297,7 +330,7 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
-        p.update(mouse.x, mouse.y, mouse.radius, t);
+        p.update(mouse.x, mouse.y, mouse.radius, mouse.strength, t);
         // 이 점이 속한 글리치 사각 구간의 가로 오프셋 합산
         let gdx = 0;
         for (let g = 0; g < glitches.length; g++) {
@@ -352,13 +385,17 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
     window.addEventListener("scroll", onScrollPause, { passive: true });
 
     // 폰트 로드 후 초기화 지연 (글꼴이 안 그려지는 이슈 방지).
-    // 국문일 땐 웹폰트가 실제로 로드된 뒤 그려야 캔버스에 반영됨.
+    // 캔버스는 폰트를 'DOM 레이아웃'이 아니라 캔버스 전용으로만 쓰기 때문에, 브라우저가
+    // 실제 웹폰트를 내려받지 않은 채 document.fonts.ready가 먼저 resolve될 수 있다.
+    // 그러면 next/font의 metric-adjusted 폴백(size-adjust 등 CSS 전용 보정이 들어간 face)이
+    // 캔버스에 그려져 글자가 겹쳐 깨진다(특히 안드로이드). → 라틴·국문 실제 face를 명시 로드한다.
     const krText = segments.filter((s) => !s.latin).map((s) => s.text).join("");
-    const fontReady = hasKorean
-      ? document.fonts
-          .load(`400 100px "TitleKR"`, krText)
-          .then(() => document.fonts.ready)
-      : document.fonts.ready;
+    const latinText = segments.filter((s) => s.latin).map((s) => s.text).join("");
+    const bebasPrimary = bebasFamily.split(",")[0].trim(); // 폴백 말고 실제 Bebas face 지정
+    const fontLoads: Promise<unknown>[] = [];
+    if (latinText) fontLoads.push(document.fonts.load(`400 100px ${bebasPrimary}`, latinText));
+    if (hasKorean) fontLoads.push(document.fonts.load(`400 100px "TitleKR"`, krText));
+    const fontReady = Promise.all(fontLoads).then(() => document.fonts.ready);
     // 폰트 로드가 실패해도(네트워크/CDN 문제) 시스템 폰트로 반드시 그려지도록 보장
     fontReady.catch(() => {}).then(() => {
       init();
@@ -384,7 +421,11 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseout", handleMouseLeave);
+      window.removeEventListener("mouseout", reset);
+      window.removeEventListener("touchstart", handleTouch);
+      window.removeEventListener("touchmove", handleTouch);
+      window.removeEventListener("touchend", reset);
+      window.removeEventListener("touchcancel", reset);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", onScrollPause);
       document.removeEventListener("visibilitychange", onVisibility);
