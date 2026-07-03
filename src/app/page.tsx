@@ -5,6 +5,8 @@ import { getProfile } from "@/lib/profiles";
 import { listPersonalBookmarks } from "@/lib/personalBookmarks";
 import { listPersonalCategories } from "@/lib/personalCategories";
 import { listCategoriesForProfile } from "@/lib/categories";
+import { loadUnifiedCategoryOrder, mergeUnifiedOrder } from "@/lib/categoryOrder";
+import { listHiddenSharedIds } from "@/lib/hiddenShared";
 import { getCachedBoard } from "@/lib/boardCache";
 import { orderCards } from "@/lib/personalBoard";
 import nextDynamic from "next/dynamic";
@@ -30,21 +32,28 @@ export default async function Home() {
 
   if (pid) {
     // 로그인 사용자: 공유 데이터(캐시) + 개인 데이터를 한 번에 동시 요청 → 왕복 1회로 단축
-    const [board, profile, personal, personalCategories, profileCategories] = await Promise.all([
+    const [board, profile, personal, personalCategories, profileCategories, savedOrder, hiddenIds] = await Promise.all([
       getCachedBoard(),
       getProfile(pid),
       listPersonalBookmarks(pid),
       listPersonalCategories(pid),
-      listCategoriesForProfile(pid), // 팀 공유 카테고리를 이 사용자만의 순서로
+      listCategoriesForProfile(pid),
+      loadUnifiedCategoryOrder(pid),
+      listHiddenSharedIds(pid),
     ]);
     if (profile) {
-      const cards = orderCards(board.bookmarks, personal, profile.orderKeys);
+      // 내가 숨긴 공유 즐겨찾기는 보드에서 제외하고, 복원 UI용으로 따로 전달
+      const hidden = new Set(hiddenIds);
+      const visibleShared = board.bookmarks.filter((b) => !hidden.has(b.id));
+      const hiddenShared = board.bookmarks.filter((b) => hidden.has(b.id));
+      const cards = orderCards(visibleShared, personal, profile.orderKeys);
+      const initialUnified = mergeUnifiedOrder(profileCategories, personalCategories, savedOrder);
       return (
         <PersonalBoardView
           profileName={profile.name}
           initialCards={cards}
-          categories={profileCategories}
-          initialPersonalCategories={personalCategories}
+          initialUnified={initialUnified}
+          initialHiddenShared={hiddenShared}
         />
       );
     }

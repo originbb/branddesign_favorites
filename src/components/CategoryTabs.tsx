@@ -1,13 +1,14 @@
 "use client";
-import type { Category } from "@/lib/types";
+import type { Category, UnifiedEntry } from "@/lib/types";
 import styles from "./CategoryTabs.module.css";
 
 export function CategoryTabs({
-  categories, personalCategories, active, onSelect,
+  categories, unified, active, onSelect,
 }: {
-  categories: Category[];
-  /** 개인 보드에서만 전달 — 별표 스타일의 개인 카테고리 탭이 추가로 노출됨 */
-  personalCategories?: Category[];
+  /** 비로그인 보드(BoardView)용 공유 카테고리 목록 */
+  categories?: Category[];
+  /** 개인 보드용 통합 순서 목록 (공유+개인 혼합). 이 값이 있으면 categories 대신 사용. */
+  unified?: UnifiedEntry[];
   active: string; // "all" | "s{id}" | "p{id}"
   onSelect: (v: string) => void;
 }) {
@@ -20,38 +21,35 @@ export function CategoryTabs({
       >
         전체
       </button>
-      {categories.map((c) => {
-        const key = `s${c.id}`;
-        return (
-          <button
-            type="button"
-            key={key}
-            className={`${styles.tab} ${active === key ? styles.active : ""}`}
-            onClick={() => onSelect(key)}
-          >
-            {c.name}
-          </button>
-        );
-      })}
-      {personalCategories && personalCategories.length > 0 && (
-        <>
-          <span className={styles.sep} aria-hidden />
-          {personalCategories.map((c) => {
-            const key = `p${c.id}`;
+      {unified
+        ? unified.map((e) => {
+            const key = `${e.kind}${e.cat.id}`;
             const on = active === key;
+            const isPersonal = e.kind === "p";
             return (
               <button
                 type="button"
                 key={key}
-                className={`${styles.tab} ${styles.personal} ${on ? styles.personalActive : ""}`}
+                className={`${styles.tab} ${isPersonal ? styles.personal : ""} ${on ? (isPersonal ? styles.personalActive : styles.active) : ""}`}
+                onClick={() => onSelect(key)}
+              >
+                {e.cat.name}
+              </button>
+            );
+          })
+        : (categories ?? []).map((c) => {
+            const key = `s${c.id}`;
+            return (
+              <button
+                type="button"
+                key={key}
+                className={`${styles.tab} ${active === key ? styles.active : ""}`}
                 onClick={() => onSelect(key)}
               >
                 {c.name}
               </button>
             );
           })}
-        </>
-      )}
     </div>
   );
 }

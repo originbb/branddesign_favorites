@@ -48,19 +48,3 @@ export async function listCategoriesForProfile(profileId: number): Promise<Categ
   `) as Row[];
   return rows.map(map);
 }
-
-// 로그인 사용자가 팀 공유 카테고리를 자신만의 순서로 재배치. 다른 팀원에겐 영향 없음.
-// 전송된 전체 순서를 개인 오버라이드 테이블에 upsert 한다.
-export async function reorderCategoriesForProfile(
-  profileId: number, ids: number[],
-): Promise<void> {
-  if (ids.length === 0) return;
-  await sql.transaction(
-    ids.map((id, i) => sql`
-      INSERT INTO profile_category_order (profile_id, category_id, sort_order)
-      VALUES (${profileId}, ${id}, ${i})
-      ON CONFLICT (profile_id, category_id)
-      DO UPDATE SET sort_order = ${i}
-    `),
-  );
-}

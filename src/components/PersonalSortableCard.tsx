@@ -38,13 +38,14 @@ export function PersonalSortableCard({
     >
       <div className={styles.actions}>
         {card.kind === "personal" && (
-          <>
-            <button type="button" onClick={() => onEdit(card)} aria-label="수정"
-              className={styles.btn}>✎</button>
-            <button type="button" onClick={() => onDelete(card)} aria-label="삭제"
-              className={styles.btn}>🗑</button>
-          </>
+          <button type="button" onClick={() => onEdit(card)} aria-label="수정"
+            className={styles.btn}>✎</button>
         )}
+        {/* 개인=실제 삭제, 공유=내 보드에서만 숨김 */}
+        <button type="button" onClick={() => onDelete(card)}
+          aria-label={card.kind === "personal" ? "삭제" : "숨기기"}
+          title={card.kind === "personal" ? "삭제" : "내 보드에서 숨기기"}
+          className={styles.btn}>{card.kind === "personal" ? "🗑" : "🙈"}</button>
         {draggable && (
           <button type="button" {...attributes} {...listeners} aria-label="이동"
             className={`${styles.btn} ${styles.grabBtn}`}>⠿</button>

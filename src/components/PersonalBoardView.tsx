@@ -5,7 +5,7 @@ import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import type { Category } from "@/lib/types";
+import type { Bookmark, UnifiedEntry } from "@/lib/types";
 import type { Card } from "@/lib/personalBoard";
 import { BookmarkForm, type BookmarkFormValue } from "./BookmarkForm";
 import { CategoryTabs } from "./CategoryTabs";
@@ -18,38 +18,41 @@ import { useDialog } from "./DialogProvider";
 import styles from "./PersonalBoardView.module.css";
 
 export function PersonalBoardView({
-  profileName, initialCards, categories, initialPersonalCategories,
+  profileName, initialCards, initialUnified, initialHiddenShared,
 }: {
   profileName: string;
   initialCards: Card[];
-  categories: Category[];
-  initialPersonalCategories: Category[];
+  initialUnified: UnifiedEntry[];
+  initialHiddenShared: Bookmark[];
 }) {
   const router = useRouter();
   const { showAlert, showConfirm, showPrompt } = useDialog();
   const dndId = useId();
   const [cards, setCards] = useState<Card[]>(initialCards);
-  const [sharedCats, setSharedCats] = useState<Category[]>(categories);
-  const [personalCats, setPersonalCats] = useState<Category[]>(initialPersonalCategories);
+  const [unified, setUnified] = useState<UnifiedEntry[]>(initialUnified);
+  const [hiddenShared, setHiddenShared] = useState<Bookmark[]>(initialHiddenShared);
   const [active, setActive] = useState<string>("all"); // "all" | "s{id}" | "p{id}"
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Card | null>(null);
   const [showCatManage, setShowCatManage] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
   const [newCat, setNewCat] = useState("");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => { setCards(initialCards); }, [initialCards]);
-  useEffect(() => { setSharedCats(categories); }, [categories]);
-  useEffect(() => { setPersonalCats(initialPersonalCategories); }, [initialPersonalCategories]);
+  useEffect(() => { setUnified(initialUnified); }, [initialUnified]);
+  useEffect(() => { setHiddenShared(initialHiddenShared); }, [initialHiddenShared]);
 
-  // 카테고리 표시 이름 조회: 공유는 `s{id}`, 개인은 `p{id}`
+  // 개별 목록 (필터링·폼 등에서 사용)
+  const sharedCats = useMemo(() => unified.filter((e) => e.kind === "s").map((e) => e.cat), [unified]);
+  const personalCats = useMemo(() => unified.filter((e) => e.kind === "p").map((e) => e.cat), [unified]);
+
   const catLabel = useMemo(() => {
     const m = new Map<string, string>();
-    for (const c of sharedCats) m.set(`s${c.id}`, c.name);
-    for (const c of personalCats) m.set(`p${c.id}`, c.name);
+    for (const e of unified) m.set(`${e.kind}${e.cat.id}`, e.cat.name);
     return m;
-  }, [sharedCats, personalCats]);
+  }, [unified]);
 
   const q = query.trim().toLowerCase();
   const filtering = active !== "all" || q !== "";
@@ -70,7 +73,6 @@ export function PersonalBoardView({
     });
   }, [cards, active, q]);
 
-  // 전체 보기에서 카드에 표시할 카테고리 라벨 (개인 카테고리 우선)
   function labelFor(c: Card): string | undefined {
     if (active !== "all") return undefined;
     if (c.kind === "personal" && c.bookmark.personalCategoryId != null) {
@@ -115,10 +117,36 @@ export function PersonalBoardView({
   }
 
   async function removeBookmark(card: Card) {
-    if (!(await showConfirm(`"${card.bookmark.title}" 삭제할까요?`))) return;
-    const res = await fetch(`/api/personal/bookmarks/${card.bookmark.id}`, { method: "DELETE" });
-    if (!res.ok) await showAlert("삭제에 실패했어요.");
-    router.refresh();
+    if (card.kind === "personal") {
+      // 내가 추가한 즐겨찾기 → 실제 삭제
+      if (!(await showConfirm(`"${card.bookmark.title}" 삭제할까요?`))) return;
+      const res = await fetch(`/api/personal/bookmarks/${card.bookmark.id}`, { method: "DELETE" });
+      if (!res.ok) await showAlert("삭제에 실패했어요.");
+      router.refresh();
+    } else {
+      // 팀 공유(기본) 즐겨찾기 → 내 보드에서만 숨김 (다른 팀원에겐 영향 없음)
+      if (!(await showConfirm(`"${card.bookmark.title}"을(를) 내 보드에서 숨길까요?\n(다른 팀원에게는 영향이 없어요. 나중에 복원할 수 있어요.)`))) return;
+      const res = await fetch("/api/personal/hidden-shared", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookmarkId: card.bookmark.id }),
+      });
+      if (!res.ok) await showAlert("숨기기에 실패했어요.");
+      router.refresh();
+    }
+  }
+
+  // 숨긴 팀 공유 즐겨찾기를 다시 보이게 복원
+  async function restoreShared(bookmarkId: number) {
+    const res = await fetch("/api/personal/hidden-shared", {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookmarkId }),
+    });
+    if (res.ok) {
+      setHiddenShared((prev) => prev.filter((b) => b.id !== bookmarkId));
+      router.refresh();
+    } else {
+      await showAlert("복원에 실패했어요.");
+    }
   }
 
   async function addCategory() {
@@ -129,15 +157,14 @@ export function PersonalBoardView({
       body: JSON.stringify({ name }),
     });
     if (res.ok) {
-      const created = (await res.json()) as Category;
-      setPersonalCats((prev) => [...prev, created]);
+      const created = await res.json();
+      setUnified((prev) => [...prev, { kind: "p", cat: created }]);
       setNewCat("");
     } else {
       await showAlert("카테고리 추가에 실패했어요.");
     }
   }
 
-  // 드래그 칩에서 인라인 편집한 새 이름으로 저장 (더블클릭 → 입력)
   async function renameCategory(id: number, name: string) {
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -146,47 +173,11 @@ export function PersonalBoardView({
       body: JSON.stringify({ name: trimmed }),
     });
     if (res.ok) {
-      setPersonalCats((prev) => prev.map((c) => c.id === id ? { ...c, name: trimmed } : c));
+      setUnified((prev) =>
+        prev.map((e) => (e.kind === "p" && e.cat.id === id ? { ...e, cat: { ...e.cat, name: trimmed } } : e)),
+      );
     } else {
       await showAlert("이름 변경에 실패했어요.");
-    }
-  }
-
-  // 팀 공유 카테고리 드래그 순서 변경 — '내 화면만' 반영 (profile_category_order 저장)
-  async function onSharedCategoryDragEnd(e: DragEndEvent) {
-    const { active: a, over } = e;
-    if (!over || a.id === over.id) return;
-    const oldIndex = sharedCats.findIndex((c) => `cat-${c.id}` === a.id);
-    const newIndex = sharedCats.findIndex((c) => `cat-${c.id}` === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
-    const next = arrayMove(sharedCats, oldIndex, newIndex);
-    setSharedCats(next);
-    const res = await fetch("/api/personal/shared-categories/reorder", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: next.map((c) => c.id) }),
-    });
-    if (!res.ok) {
-      await showAlert("순서 저장에 실패했어요. 다시 로그인해야 할 수 있어요.");
-      router.refresh();
-    }
-  }
-
-  // 개인 카테고리 드래그 순서 변경 (개인 북마크 드래그와 동일한 방식)
-  async function onCategoryDragEnd(e: DragEndEvent) {
-    const { active: a, over } = e;
-    if (!over || a.id === over.id) return;
-    const oldIndex = personalCats.findIndex((c) => `cat-${c.id}` === a.id);
-    const newIndex = personalCats.findIndex((c) => `cat-${c.id}` === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
-    const next = arrayMove(personalCats, oldIndex, newIndex);
-    setPersonalCats(next);
-    const res = await fetch("/api/personal/categories/reorder", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: next.map((c) => c.id) }),
-    });
-    if (!res.ok) {
-      await showAlert("순서 저장에 실패했어요. 다시 로그인해야 할 수 있어요.");
-      router.refresh();
     }
   }
 
@@ -194,11 +185,30 @@ export function PersonalBoardView({
     if (!(await showConfirm("카테고리를 삭제할까요? (이 카테고리의 링크는 '없음'으로 남습니다)"))) return;
     const res = await fetch(`/api/personal/categories/${id}`, { method: "DELETE" });
     if (res.ok) {
-      setPersonalCats((prev) => prev.filter((c) => c.id !== id));
+      setUnified((prev) => prev.filter((e) => !(e.kind === "p" && e.cat.id === id)));
       if (active === `p${id}`) setActive("all");
       router.refresh();
     } else {
       await showAlert("삭제에 실패했어요.");
+    }
+  }
+
+  // 카테고리 관리에서 공유+개인 통합 드래그 순서 변경
+  async function onCategoryDragEnd(e: DragEndEvent) {
+    const { active: a, over } = e;
+    if (!over || a.id === over.id) return;
+    const oldIndex = unified.findIndex((e) => `${e.kind}${e.cat.id}` === a.id);
+    const newIndex = unified.findIndex((e) => `${e.kind}${e.cat.id}` === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const next = arrayMove(unified, oldIndex, newIndex);
+    setUnified(next);
+    const res = await fetch("/api/personal/categories/reorder-unified", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: next.map((e) => ({ kind: e.kind, id: e.cat.id })) }),
+    });
+    if (!res.ok) {
+      await showAlert("순서 저장에 실패했어요. 다시 로그인해야 할 수 있어요.");
+      router.refresh();
     }
   }
 
@@ -227,7 +237,6 @@ export function PersonalBoardView({
     }
   }
 
-  // 영문 이름은 Bebas Neue, 국문 등은 Pretendard로 렌더 (ParticleText가 자동 판별)
   const isEnglishName = /^[a-zA-Z0-9\s]+$/.test(profileName);
   const particleText = isEnglishName ? profileName.toUpperCase() : profileName;
 
@@ -244,8 +253,7 @@ export function PersonalBoardView({
         </div>
         <div className={styles.controls}>
           <CategoryTabs
-            categories={sharedCats}
-            personalCategories={personalCats}
+            unified={unified}
             active={active}
             onSelect={setActive}
           />
@@ -254,50 +262,70 @@ export function PersonalBoardView({
             onClick={() => setShowCatManage((v) => !v)}>
             {showCatManage ? "카테고리 닫기" : "★ 카테고리 관리"}
           </button>
+          {hiddenShared.length > 0 && (
+            <button type="button" className={styles.ghostBtn}
+              onClick={() => setShowHidden((v) => !v)}>
+              {showHidden ? "숨긴 항목 닫기" : `🙈 숨긴 즐겨찾기 ${hiddenShared.length}`}
+            </button>
+          )}
         </div>
 
         {showCatManage && (
           <div className={styles.catManage}>
-            {/* 팀 공유 카테고리 — 순서만 내 화면 기준으로 조정 (이름변경/삭제는 관리자 전용) */}
-            {sharedCats.length > 0 && (
-              <>
-                <p className={styles.catSectionTitle}>팀 공유 카테고리 · 내 순서</p>
-                <DndContext id={`${dndId}-shared`} sensors={sensors}
-                  collisionDetection={closestCenter} onDragEnd={onSharedCategoryDragEnd}>
-                  <SortableContext items={sharedCats.map((c) => `cat-${c.id}`)}
-                    strategy={horizontalListSortingStrategy}>
-                    <div className={styles.catList}>
-                      {sharedCats.map((c) => (
-                        <SortableCategoryChip key={c.id} category={c} />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-                <p className={styles.catSectionTitle} style={{ marginTop: 16 }}>내 카테고리</p>
-              </>
-            )}
+            <p className={styles.catSectionTitle}>
+              카테고리 순서 · 드래그로 공유/개인 카테고리를 함께 배치할 수 있어요
+            </p>
             <div className={styles.catManageRow}>
-              <input className={styles.catInput} placeholder="새 카테고리 (나만 봄)"
+              <input className={styles.catInput} placeholder="새 개인 카테고리 (나만 봄)"
                 value={newCat} onChange={(e) => setNewCat(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCategory(); } }} />
               <button type="button" className={styles.addBtn} onClick={addCategory}>추가</button>
             </div>
-            {personalCats.length === 0 ? (
-              <p className={styles.catEmpty}>아직 개인 카테고리가 없어요. 위에서 추가해 보세요.</p>
+            {unified.length === 0 ? (
+              <p className={styles.catEmpty}>카테고리가 없어요.</p>
             ) : (
               <DndContext id={`${dndId}-cat`} sensors={sensors}
                 collisionDetection={closestCenter} onDragEnd={onCategoryDragEnd}>
-                <SortableContext items={personalCats.map((c) => `cat-${c.id}`)}
-                  strategy={horizontalListSortingStrategy}>
+                <SortableContext
+                  items={unified.map((e) => `${e.kind}${e.cat.id}`)}
+                  strategy={horizontalListSortingStrategy}
+                >
                   <div className={styles.catList}>
-                    {personalCats.map((c) => (
-                      <SortableCategoryChip key={c.id} category={c}
-                        onDelete={removeCategory} onRename={renameCategory} />
-                    ))}
+                    {unified.map((e) => {
+                      const sid = `${e.kind}${e.cat.id}`;
+                      return (
+                        <SortableCategoryChip
+                          key={sid}
+                          sortableId={sid}
+                          category={e.cat}
+                          isPersonal={e.kind === "p"}
+                          onDelete={e.kind === "p" ? removeCategory : undefined}
+                          onRename={e.kind === "p" ? renameCategory : undefined}
+                        />
+                      );
+                    })}
                   </div>
                 </SortableContext>
               </DndContext>
             )}
+          </div>
+        )}
+
+        {showHidden && hiddenShared.length > 0 && (
+          <div className={styles.catManage}>
+            <p className={styles.catSectionTitle}>
+              숨긴 기본 즐겨찾기 · 복원하면 다시 내 보드에 나타나요
+            </p>
+            <div className={styles.catList}>
+              {hiddenShared.map((b) => (
+                <span key={b.id} className={styles.catChip}>
+                  <span className={styles.catChipName}>{b.title}</span>
+                  <button type="button" className={styles.catChipDel}
+                    onClick={() => restoreShared(b.id)}
+                    aria-label="복원" title="복원">↩</button>
+                </span>
+              ))}
+            </div>
           </div>
         )}
 

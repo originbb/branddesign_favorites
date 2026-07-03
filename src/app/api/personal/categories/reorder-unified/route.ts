@@ -1,20 +1,22 @@
 import { NextResponse } from "next/server";
 import { currentProfileId } from "@/lib/session";
-import { reorderPersonalCategories } from "@/lib/personalCategories";
+import { saveUnifiedCategoryOrder } from "@/lib/categoryOrder";
 
 export async function POST(request: Request) {
   const pid = await currentProfileId();
   if (!pid) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const body = await request.json().catch(() => null);
-  const ids = Array.isArray(body?.ids) ? body.ids.map(Number) : null;
-  if (!ids) return NextResponse.json({ error: "ids required" }, { status: 400 });
-  if (ids.some((v: number) => !Number.isInteger(v) || v <= 0)) {
-    return NextResponse.json({ error: "ids must be positive integers" }, { status: 400 });
+  const items = Array.isArray(body?.items) ? body.items : null;
+  if (!items) return NextResponse.json({ error: "items required" }, { status: 400 });
+  for (const item of items) {
+    if (!['s', 'p'].includes(item.kind) || !Number.isInteger(item.id) || item.id <= 0) {
+      return NextResponse.json({ error: "invalid item" }, { status: 400 });
+    }
   }
 
   try {
-    await reorderPersonalCategories(pid, ids);
+    await saveUnifiedCategoryOrder(pid, items);
   } catch {
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
   }

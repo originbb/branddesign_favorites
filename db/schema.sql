@@ -50,3 +50,12 @@ CREATE TABLE IF NOT EXISTS personal_bookmarks (
 );
 
 CREATE INDEX IF NOT EXISTS idx_personal_bookmarks_profile ON personal_bookmarks(profile_id);
+
+-- 개인 모드에서 팀 공유(기본) 즐겨찾기를 '내 보드에서만' 숨김 처리
+CREATE TABLE IF NOT EXISTS personal_hidden_shared (
+  profile_id  INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  bookmark_id INTEGER NOT NULL REFERENCES bookmarks(id) ON DELETE CASCADE,
+  PRIMARY KEY (profile_id, bookmark_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_personal_hidden_shared_profile ON personal_hidden_shared(profile_id);

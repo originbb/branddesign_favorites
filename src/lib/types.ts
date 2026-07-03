@@ -4,6 +4,9 @@ export type Category = {
   sortOrder: number;
 };
 
+/** 개인 모드 통합 카테고리 항목. kind='s'는 팀 공유, kind='p'는 개인 카테고리. */
+export type UnifiedEntry = { kind: 's' | 'p'; cat: Category };
+
 export type Bookmark = {
   id: number;
   title: string;
