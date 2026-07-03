@@ -17,9 +17,12 @@ const PersonalBoardView = nextDynamic(() =>
 );
 
 export const dynamic = "force-dynamic";
-// 함수를 DB(ap-southeast-1, 싱가포르) 옆에서 실행해 쿼리 왕복 지연을 최소화한다.
-// (기존엔 미국 iad1에서 실행돼 쿼리마다 태평양을 왕복했음)
-export const preferredRegion = "sin1";
+// 함수를 사용자(한국)와 가장 가까운 서울(icn1)에서 실행한다.
+// 로그아웃 방문은 공유 데이터 캐시로 DB를 타지 않으므로 사용자 근접이 최우선이고,
+// 로그인 조회는 DB 호출을 1회로 묶어 원거리(DB=싱가포르) 지연을 완화했다.
+// (기존엔 미국 iad1에서 실행돼 매 요청이 태평양을 왕복했음)
+// ※ 최적안은 DB도 서울(ap-northeast-2)로 옮겨 모두 근거리로 만드는 것.
+export const preferredRegion = "icn1";
 
 export default async function Home() {
   const store = await cookies();
