@@ -50,3 +50,19 @@ CREATE TABLE IF NOT EXISTS personal_bookmarks (
 );
 
 CREATE INDEX IF NOT EXISTS idx_personal_bookmarks_profile ON personal_bookmarks(profile_id);
+
+-- 로그인 사용자별 '팀 공유 카테고리' 순서(본인 화면만 반영)
+CREATE TABLE IF NOT EXISTS profile_category_order (
+  profile_id  INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+  sort_order  INTEGER NOT NULL,
+  PRIMARY KEY (profile_id, category_id)
+);
+
+-- 로그인 레이트리밋/계정 잠금 공유 카운터(서버리스 인스턴스 간 공유)
+CREATE TABLE IF NOT EXISTS login_guard (
+  key          TEXT PRIMARY KEY,
+  count        INTEGER NOT NULL DEFAULT 0,
+  window_start TIMESTAMPTZ NOT NULL DEFAULT now(),
+  locked_until TIMESTAMPTZ
+);
