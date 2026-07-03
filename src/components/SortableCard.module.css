@@ -23,12 +23,10 @@
   pointer-events: auto;
 }
 
-@media (hover: none) {
-  .actions {
-    opacity: 0.9;
-    transform: none;
-    pointer-events: auto;
-  }
+.forceShow {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
 }
 
 .btn {

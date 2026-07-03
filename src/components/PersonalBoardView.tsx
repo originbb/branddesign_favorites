@@ -314,7 +314,7 @@ export function PersonalBoardView({
           <div className={styles.toolRow}>
             <button type="button" className={styles.ghostBtn}
               onClick={() => setShowCatManage((v) => !v)}>
-              {showCatManage ? "카테고리 닫기" : "카테고리 관리"}
+              {showCatManage ? "완료" : "보드 편집"}
             </button>
             {hiddenShared.length > 0 && (
               <button type="button" className={styles.ghostBtn}
@@ -403,7 +403,7 @@ export function PersonalBoardView({
         )}
 
         {!filtering && (
-          <p className={styles.tip}>카드의 ⠿ 핸들을 잡고 드래그하면 순서를 바꿀 수 있어요. (전체 보기에서만)</p>
+          <p className={styles.tip}>보드 편집 모드에서 카드의 ⠿ 핸들을 드래그해 순서를 바꿀 수 있어요.</p>
         )}
       </header>
 
@@ -418,6 +418,7 @@ export function PersonalBoardView({
                   key={c.key}
                   card={c}
                   draggable={!filtering}
+                  isEditing={showCatManage}
                   categoryName={labelFor(c)}
                   onEdit={(card) => { setEditing(card); setShowForm(true); }}
                   onDelete={removeBookmark}

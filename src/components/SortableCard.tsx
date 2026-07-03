@@ -6,9 +6,10 @@ import { BookmarkCard } from "./BookmarkCard";
 import styles from "./SortableCard.module.css";
 
 export function SortableCard({
-  bookmark, onEdit, onDelete,
+  bookmark, isEditing = true, onEdit, onDelete,
 }: {
   bookmark: Bookmark;
+  isEditing?: boolean;
   onEdit: (b: Bookmark) => void;
   onDelete: (b: Bookmark) => void;
 }) {
@@ -25,7 +26,7 @@ export function SortableCard({
         opacity: isDragging ? 0.6 : 1,
       }}
     >
-      <div className={styles.actions}>
+      <div className={`${styles.actions} ${isEditing ? styles.forceShow : ""}`}>
         <button type="button" onClick={() => onEdit(bookmark)} aria-label="수정"
           className={styles.btn}>✎</button>
         <button type="button" onClick={() => onDelete(bookmark)} aria-label="삭제"

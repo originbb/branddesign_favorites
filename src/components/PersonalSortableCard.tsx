@@ -15,11 +15,12 @@ function toBookmark(card: Card): Bookmark {
 }
 
 export function PersonalSortableCard({
-  card, categoryName, draggable, onEdit, onDelete,
+  card, categoryName, draggable, isEditing, onEdit, onDelete,
 }: {
   card: Card;
   categoryName?: string;
   draggable: boolean;
+  isEditing?: boolean;
   onEdit: (card: Card) => void;
   onDelete: (card: Card) => void;
 }) {
@@ -36,7 +37,7 @@ export function PersonalSortableCard({
         opacity: isDragging ? 0.6 : 1,
       }}
     >
-      <div className={styles.actions}>
+      <div className={`${styles.actions} ${isEditing ? styles.forceShow : ""}`}>
         {card.kind === "personal" && (
           <button type="button" onClick={() => onEdit(card)} aria-label="수정"
             className={styles.btn}>✎</button>
