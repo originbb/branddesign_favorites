@@ -100,6 +100,47 @@
   transform: scale(0.98);
 }
 
+/* 편집 모드 활성 상태의 "완료" 버튼 강조 */
+.ghostBtnActive {
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+}
+.ghostBtnActive:hover {
+  background: var(--accent);
+  filter: brightness(1.05);
+}
+
+/* "편집 중" 표시 배지 */
+.editBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  white-space: nowrap;
+}
+.editBadge::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: edit-badge-pulse 1.4s ease-in-out infinite;
+}
+@keyframes edit-badge-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .editBadge::before { animation: none; }
+}
+
 /* ⋮ 계정 메뉴: PIN 변경/로그아웃을 접어 헤더를 정리 */
 .menuWrap {
   position: relative;

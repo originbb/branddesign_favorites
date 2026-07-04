@@ -2,7 +2,7 @@
 import { useState, useId } from "react";
 import { useRouter } from "next/navigation";
 import {
-  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
+  DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
 import {
@@ -28,7 +28,12 @@ export function ManageBoard({
   const [showForm, setShowForm] = useState(false);
   const [newCat, setNewCat] = useState("");
   const { showAlert, showConfirm, showPrompt } = useDialog();
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    // 데스크톱: 5px 이동으로 드래그 시작
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    // 모바일: 길게 눌러 드래그 시작(짧은 스와이프는 스크롤로 통과)
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+  );
 
   async function saveBookmark(value: BookmarkFormValue) {
     const payload = { ...value, description: value.description || null };

@@ -35,6 +35,8 @@
   --shadow-hover: 0 16px 32px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
   --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   --glass-blur: blur(28px);
+  /* 편집 모드 전용: 블러를 끈 불투명 카드 배경(성능·가독성) */
+  --surface-solid: #ffffff;
 }
 
 [data-theme='dark'] {
@@ -52,10 +54,21 @@
   --accent: #0a84ff;
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-hover: 0 20px 48px rgba(0, 0, 0, 0.6);
+  --surface-solid: #1c1c1e;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* 모바일(iOS Safari 등): 입력창 글자가 16px 미만이면 포커스 시 자동 확대됨.
+   검색·내 링크 추가 등 모든 입력에서 자동 확대를 끄기 위해 16px로 강제. */
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
 
 html, body {
@@ -118,5 +131,13 @@ button {
 
 [data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
+}
+
+/* ── 편집 모드 카드 ─────────────────────────────────────────────
+   흔들림 없음. 편집 상태는 좌상단 − 버튼 + 헤더 "편집 중" 배지로 표시.
+   블러를 평소(28px)의 50%(14px)로 낮춰 유리감은 유지하되 살짝 또렷하게. */
+.edit-card > a {
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
 }
 

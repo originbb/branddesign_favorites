@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useMemo, useState, useId } from "react";
+import { useEffect, useMemo, useState, useId, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import {
-  DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
+  DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors, type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Bookmark, Category, UnifiedEntry } from "@/lib/types";
@@ -42,7 +42,12 @@ export function PersonalBoardView({
   const [showHidden, setShowHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [newCat, setNewCat] = useState("");
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    // 데스크톱: 5px 이동으로 드래그 시작
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    // 모바일: 길게 눌러 드래그 시작(짧은 스와이프는 스크롤로 통과)
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+  );
 
   useEffect(() => { setCards(initialCards); }, [initialCards]);
   useEffect(() => { setUnified(initialUnified); }, [initialUnified]);
@@ -277,8 +282,16 @@ export function PersonalBoardView({
   const isEnglishName = /^[a-zA-Z0-9\s]+$/.test(profileName);
   const particleText = isEnglishName ? profileName.toUpperCase() : profileName;
 
+  // 편집 모드에서 카드·헤더가 아닌 빈 영역을 탭하면 편집 종료 (모달 없이, iOS 홈 화면처럼)
+  function handleBoardClick(e: MouseEvent) {
+    if (!showCatManage || showForm) return;
+    const t = e.target as HTMLElement;
+    if (t.closest("[data-card]") || t.closest("header")) return;
+    setShowCatManage(false);
+  }
+
   return (
-    <main className={styles.page}>
+    <main className={styles.page} onClick={handleBoardClick}>
       <header className={styles.header}>
         <ParticleText text={particleText} />
         <div className={styles.headActions}>
@@ -312,9 +325,11 @@ export function PersonalBoardView({
           />
           <SearchBar value={query} onChange={setQuery} />
           <div className={styles.toolRow}>
-            <button type="button" className={styles.ghostBtn}
+            {showCatManage && <span className={styles.editBadge}>편집 중</span>}
+            <button type="button"
+              className={`${styles.ghostBtn} ${showCatManage ? styles.ghostBtnActive : ""}`}
               onClick={() => setShowCatManage((v) => !v)}>
-              {showCatManage ? "완료" : "보드 편집"}
+              {showCatManage ? "✓ 완료" : "보드 편집"}
             </button>
             {hiddenShared.length > 0 && (
               <button type="button" className={styles.ghostBtn}
@@ -403,7 +418,7 @@ export function PersonalBoardView({
         )}
 
         {!filtering && (
-          <p className={styles.tip}>보드 편집 모드에서 카드의 ⠿ 핸들을 드래그해 순서를 바꿀 수 있어요.</p>
+          <p className={styles.tip}>편집 모드: 카드를 드래그해 순서 변경(모바일은 길게 눌러 이동), 좌상단 −로 삭제/숨김. 빈 곳을 탭하거나 완료를 누르면 끝나요.</p>
         )}
       </header>
 

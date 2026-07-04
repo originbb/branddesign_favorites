@@ -5,17 +5,17 @@ import { CSS } from "@dnd-kit/utilities";
 import type { Category } from "@/lib/types";
 
 export function SortableCategoryChip({
-  category, sortableId, isPersonal, onDelete, onRename, onHide,
+  category, sortableId, onDelete, onRename, onHide,
 }: {
   category: Category;
   /** 명시적 DnD id. 미지정 시 `cat-{id}` 사용 (ManageBoard 호환) */
   sortableId?: string;
-  /** true이면 ★ 뱃지 표시 */
+  /** 호환용(개인 카테고리 여부) — 현재 표시에는 사용하지 않음 */
   isPersonal?: boolean;
   // 팀 공유 카테고리는 순서만 바꾸므로 생략 가능(있으면 이름변경/삭제 노출)
   onDelete?: (id: number) => void;
   onRename?: (id: number, name: string) => void;
-  /** 팀 공유 카테고리 전용: 내 보드에서 숨기기(🙈) 버튼 노출 */
+  /** 팀 공유 카테고리 전용: 내 보드에서 숨기기 버튼 노출 */
   onHide?: (id: number) => void;
 }) {
   const editable = !!onRename;
@@ -33,9 +33,17 @@ export function SortableCategoryChip({
     onRename?.(category.id, draft);
   }
 
+  const iconBtnStyle = {
+    border: "none", background: "transparent", color: "var(--text-dim)",
+    cursor: "pointer", padding: 0, fontSize: 15, lineHeight: 1,
+  } as const;
+
   return (
     <span
       ref={setNodeRef}
+      // 칩 전체를 드래그 핸들로 사용 (어디든 눌러 이동)
+      {...attributes}
+      {...listeners}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
@@ -49,19 +57,18 @@ export function SortableCategoryChip({
         background: "var(--surface)",
         color: "var(--text)",
         fontSize: 14,
+        cursor: "grab",
+        touchAction: "manipulation",
+        // 편집 모드에서 각 카테고리가 또렷하게 보이도록 은은한 그림자
+        boxShadow: "0 2px 7px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.04)",
       }}
     >
-      <button type="button"
-        {...attributes}
-        {...listeners}
-        aria-label="카테고리 이동"
-        style={{ border: "none", background: "transparent", color: "var(--text-dim)", cursor: "grab", padding: 0 }}
-      >⠿</button>
-      {/* 개인 카테고리 별표 뱃지 제거 */}
       {editing ? (
         <input
           autoFocus
           value={draft}
+          // 이름 편집 중에는 칩 드래그가 시작되지 않도록
+          onPointerDown={(e) => e.stopPropagation()}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") { e.preventDefault(); commitRename(); }
@@ -90,18 +97,20 @@ export function SortableCategoryChip({
       )}
       {onDelete && (
         <button type="button"
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onDelete(category.id)}
           aria-label="카테고리 삭제"
-          style={{ border: "none", background: "transparent", color: "var(--text-dim)", padding: 0 }}
+          style={iconBtnStyle}
         >✕</button>
       )}
       {onHide && (
         <button type="button"
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onHide(category.id)}
           aria-label="카테고리 숨기기"
           title="내 보드에서 숨기기 (탭과 그 안의 즐겨찾기 함께)"
-          style={{ border: "none", background: "transparent", color: "var(--text-dim)", cursor: "pointer", padding: 0 }}
-        >🙈</button>
+          style={iconBtnStyle}
+        >−</button>
       )}
     </span>
   );
