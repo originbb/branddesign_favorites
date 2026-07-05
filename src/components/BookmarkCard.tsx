@@ -73,6 +73,7 @@ export function BookmarkCard({
           <p className={styles.title}>{bookmark.title}</p>
           {categoryName && <span className={styles.badge}>{categoryName}</span>}
         </div>
+        {/* 설명이 있을 때만 렌더. 없으면 그리지 않아, 남은 카드 높이만큼 본문이 세로 중앙 정렬된다. */}
         {bookmark.description && <p className={styles.desc}>{bookmark.description}</p>}
         <p className={styles.domain}>{domainOf(bookmark.url)}</p>
       </div>

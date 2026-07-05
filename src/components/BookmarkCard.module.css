@@ -113,11 +113,11 @@
 }
 
 .desc {
-  font-size: 12px; 
-  color: var(--text-dim); 
+  font-size: 12px;
+  color: var(--text-dim);
   margin: 3px 0 0;
-  white-space: nowrap; 
-  overflow: hidden; 
+  white-space: nowrap;
+  overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.4;
 }
