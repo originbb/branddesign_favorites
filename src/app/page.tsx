@@ -64,6 +64,7 @@ export default async function Home() {
           profileName={profile.name}
           initialCards={cards}
           initialUnified={initialUnified}
+          initialPinnedKeys={profile.pinnedKeys}
           initialHiddenShared={hiddenShared}
           initialHiddenCategories={hiddenCategories}
         />

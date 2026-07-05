@@ -263,6 +263,48 @@
   gap: 16px;
   margin-top: 20px;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  /* 모든 행 높이를 가장 큰 카드에 맞춰 균일화 (설명 유무로 높이가 달라지지 않게) */
+  grid-auto-rows: 1fr;
+}
+
+/* "전체" 카테고리/고정 섹션 목록 */
+.sections {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.section {
+  /* 고정 섹션 카드의 우상단 📌 버튼(top:-8px)이 잘리지 않도록 살짝 여유 */
+  padding-top: 2px;
+}
+
+.sectionHead {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 0.01em;
+  padding-left: 2px;
+}
+
+/* 섹션 안 그리드는 헤더 바로 아래로 붙인다 */
+.section .grid {
+  margin-top: 12px;
+}
+
+@media (max-width: 768px) {
+  .sections {
+    margin-top: 16px;
+    gap: 22px;
+  }
+  .section .grid {
+    margin-top: 10px;
+  }
 }
 
 /* 개인 카테고리 관리 */

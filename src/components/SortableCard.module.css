@@ -1,5 +1,12 @@
 .wrapper {
   position: relative;
+  /* 격자 셀 높이를 채워, 내부 카드가 같은 행의 다른 카드와 높이를 맞추도록 */
+  height: 100%;
+}
+
+/* wrapper → BookmarkCard(.card) 사이 중간 래퍼도 높이를 전달 */
+.cardHost {
+  height: 100%;
 }
 
 /* iOS 홈 화면 스타일 삭제(−) 버튼: 카드 좌상단 모서리 */
@@ -98,6 +105,18 @@
 
 .btn:active {
   transform: scale(0.92);
+}
+
+/* 고정된 상태의 📌 버튼: 항상 강조색으로 채워 고정 여부를 표시 */
+.pinOn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.pinOn:hover {
+  background: var(--accent);
+  filter: brightness(1.05);
 }
 
 .grabBtn {

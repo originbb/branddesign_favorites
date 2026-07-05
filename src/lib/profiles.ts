@@ -1,12 +1,14 @@
 import { sql } from "@/lib/db";
 import type { Profile } from "@/lib/types";
 
-type Row = { id: number; name: string; order_keys: string[] | null };
-const map = (r: Row): Profile => ({ id: r.id, name: r.name, orderKeys: r.order_keys ?? [] });
+type Row = { id: number; name: string; order_keys: string[] | null; pinned_keys: string[] | null };
+const map = (r: Row): Profile => ({
+  id: r.id, name: r.name, orderKeys: r.order_keys ?? [], pinnedKeys: r.pinned_keys ?? [],
+});
 
 export async function getProfile(id: number): Promise<Profile | null> {
   const rows = (await sql`
-    SELECT id, name, order_keys FROM profiles WHERE id = ${id}
+    SELECT id, name, order_keys, pinned_keys FROM profiles WHERE id = ${id}
   `) as Row[];
   return rows[0] ? map(rows[0]) : null;
 }
@@ -28,7 +30,7 @@ export async function createProfile(
   const rows = (await sql`
     INSERT INTO profiles (name, name_key, pin_hash)
     VALUES (${name}, ${nameKey}, ${pinHash})
-    RETURNING id, name, order_keys
+    RETURNING id, name, order_keys, pinned_keys
   `) as Row[];
   return map(rows[0]);
 }
@@ -37,14 +39,18 @@ export async function setOrderKeys(profileId: number, keys: string[]): Promise<v
   await sql`UPDATE profiles SET order_keys = ${keys} WHERE id = ${profileId}`;
 }
 
+export async function setPinnedKeys(profileId: number, keys: string[]): Promise<void> {
+  await sql`UPDATE profiles SET pinned_keys = ${keys} WHERE id = ${profileId}`;
+}
+
 export async function listProfiles(): Promise<Profile[]> {
   // 각 프로필의 개인 북마크 수를 함께 집계해 관리 화면에 노출
   const rows = (await sql`
-    SELECT p.id, p.name, p.order_keys,
+    SELECT p.id, p.name, p.order_keys, p.pinned_keys,
            COUNT(pb.id)::int AS bookmark_count
     FROM profiles p
     LEFT JOIN personal_bookmarks pb ON pb.profile_id = p.id
-    GROUP BY p.id, p.name, p.order_keys
+    GROUP BY p.id, p.name, p.order_keys, p.pinned_keys
     ORDER BY p.name ASC
   `) as (Row & { bookmark_count: number })[];
   return rows.map((r) => ({ ...map(r), bookmarkCount: r.bookmark_count }));

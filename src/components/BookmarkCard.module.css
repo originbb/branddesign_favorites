@@ -3,6 +3,11 @@
   display: flex;
   gap: 14px;
   align-items: center;
+  /* 카드 높이를 균일하게. 설명이 있는 카드(제목+설명+도메인) 높이를 기준으로
+     min-height 를 두어, 설명이 없는 카드도 같은 높이를 갖고 내용은
+     align-items:center 로 세로 중앙 정렬된다. (섹션별로 그리드가 나뉘어도 전역 균일) */
+  min-height: 87px;
+  height: 100%;
   padding: 16px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -134,6 +139,7 @@
 
 /* 모바일: 카드 여백을 살짝 줄여 한 화면에 더 많은 항목이 보이도록(가독성은 유지) */
 @media (max-width: 640px) {
-  .card { padding: 14px; gap: 12px; }
+  /* 모바일은 패딩이 작아 기준 높이도 4px 낮춘다 */
+  .card { padding: 14px; gap: 12px; min-height: 83px; }
 }
 

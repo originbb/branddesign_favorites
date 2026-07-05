@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   name_key    TEXT NOT NULL UNIQUE,
   pin_hash    TEXT NOT NULL,
   order_keys  TEXT[] NOT NULL DEFAULT '{}',
+  pinned_keys TEXT[] NOT NULL DEFAULT '{}',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

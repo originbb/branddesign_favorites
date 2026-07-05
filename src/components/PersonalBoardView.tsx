@@ -1,13 +1,14 @@
 "use client";
-import { useEffect, useMemo, useState, useId, type MouseEvent } from "react";
+import { useEffect, useMemo, useState, useId } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Pin } from "lucide-react";
 import {
   DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors, type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Bookmark, Category, UnifiedEntry } from "@/lib/types";
 import type { Card } from "@/lib/personalBoard";
+import { buildSections, categoryKeyOf } from "@/lib/personalBoard";
 import { BookmarkForm, type BookmarkFormValue } from "./BookmarkForm";
 import { CategoryTabs } from "./CategoryTabs";
 import { SearchBar } from "./SearchBar";
@@ -19,11 +20,12 @@ import { useDialog } from "./DialogProvider";
 import styles from "./PersonalBoardView.module.css";
 
 export function PersonalBoardView({
-  profileName, initialCards, initialUnified, initialHiddenShared, initialHiddenCategories,
+  profileName, initialCards, initialUnified, initialPinnedKeys, initialHiddenShared, initialHiddenCategories,
 }: {
   profileName: string;
   initialCards: Card[];
   initialUnified: UnifiedEntry[];
+  initialPinnedKeys: string[];
   initialHiddenShared: Bookmark[];
   initialHiddenCategories: Category[];
 }) {
@@ -32,6 +34,7 @@ export function PersonalBoardView({
   const dndId = useId();
   const [cards, setCards] = useState<Card[]>(initialCards);
   const [unified, setUnified] = useState<UnifiedEntry[]>(initialUnified);
+  const [pinnedKeys, setPinnedKeys] = useState<string[]>(initialPinnedKeys);
   const [hiddenShared, setHiddenShared] = useState<Bookmark[]>(initialHiddenShared);
   const [hiddenCategories, setHiddenCategories] = useState<Category[]>(initialHiddenCategories);
   const [active, setActive] = useState<string>("all"); // "all" | "s{id}" | "p{id}"
@@ -51,6 +54,23 @@ export function PersonalBoardView({
 
   useEffect(() => { setCards(initialCards); }, [initialCards]);
   useEffect(() => { setUnified(initialUnified); }, [initialUnified]);
+  useEffect(() => { setPinnedKeys(initialPinnedKeys); }, [initialPinnedKeys]);
+
+  // 편집 모드에서 카드·헤더·버튼·다이얼로그가 아닌 빈 곳을 누르면 편집 종료.
+  // (문서 전체에서 감지 → PC의 콘텐츠 바깥 여백까지 포함해 어디를 눌러도 동작)
+  useEffect(() => {
+    if (!showCatManage || showForm) return;
+    function onDocPointerDown(e: PointerEvent) {
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      if (menuOpen) return; // 계정 메뉴가 열려 있으면 그쪽 처리에 맡김
+      if (document.querySelector('[role="dialog"]')) return; // 확인/입력 다이얼로그 열림
+      if (t.closest("[data-card]") || t.closest("header") || t.closest("button")) return;
+      setShowCatManage(false);
+    }
+    document.addEventListener("pointerdown", onDocPointerDown);
+    return () => document.removeEventListener("pointerdown", onDocPointerDown);
+  }, [showCatManage, showForm, menuOpen]);
   useEffect(() => { setHiddenShared(initialHiddenShared); }, [initialHiddenShared]);
   useEffect(() => { setHiddenCategories(initialHiddenCategories); }, [initialHiddenCategories]);
 
@@ -83,6 +103,14 @@ export function PersonalBoardView({
     });
   }, [cards, active, q]);
 
+  // "전체" 탭 + 비검색일 때만 카테고리 블록/고정 섹션으로 나눠 보여준다.
+  const sectioned = active === "all" && q === "";
+  const sections = useMemo(
+    () => buildSections(cards, unified, pinnedKeys),
+    [cards, unified, pinnedKeys],
+  );
+  const pinnedSet = useMemo(() => new Set(pinnedKeys), [pinnedKeys]);
+
   function labelFor(c: Card): string | undefined {
     if (active !== "all") return undefined;
     if (c.kind === "personal" && c.bookmark.personalCategoryId != null) {
@@ -95,8 +123,38 @@ export function PersonalBoardView({
   async function onDragEnd(e: DragEndEvent) {
     const { active: a, over } = e;
     if (!over || a.id === over.id) return;
-    const oldIndex = cards.findIndex((c) => c.key === a.id);
-    const newIndex = cards.findIndex((c) => c.key === over.id);
+    const aKey = String(a.id);
+    const oKey = String(over.id);
+    const aPinned = pinnedSet.has(aKey);
+    const oPinned = pinnedSet.has(oKey);
+    // 고정 섹션 ↔ 카테고리 블록 경계를 넘는 이동은 무시
+    if (aPinned !== oPinned) return;
+
+    if (aPinned) {
+      // 고정 섹션 안에서 순서 변경 → pinned_keys 저장
+      const oldIndex = pinnedKeys.indexOf(aKey);
+      const newIndex = pinnedKeys.indexOf(oKey);
+      if (oldIndex === -1 || newIndex === -1) return;
+      const next = arrayMove(pinnedKeys, oldIndex, newIndex);
+      setPinnedKeys(next);
+      const res = await fetch("/api/personal/pins", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keys: next }),
+      });
+      if (!res.ok) {
+        await showAlert("고정 순서 저장에 실패했어요. 다시 로그인해야 할 수 있어요.");
+        router.refresh();
+      }
+      return;
+    }
+
+    // 일반 카드: 같은 카테고리 블록 안에서만 순서 변경 (다른 카테고리로 넘기면 무시)
+    const aCard = cards.find((c) => c.key === aKey);
+    const oCard = cards.find((c) => c.key === oKey);
+    if (!aCard || !oCard) return;
+    if (sectioned && categoryKeyOf(aCard) !== categoryKeyOf(oCard)) return;
+    const oldIndex = cards.findIndex((c) => c.key === aKey);
+    const newIndex = cards.findIndex((c) => c.key === oKey);
     if (oldIndex === -1 || newIndex === -1) return;
     const next = arrayMove(cards, oldIndex, newIndex);
     setCards(next);
@@ -106,6 +164,23 @@ export function PersonalBoardView({
     });
     if (!res.ok) {
       await showAlert("순서 저장에 실패했어요. 다시 로그인해야 할 수 있어요.");
+      router.refresh();
+    }
+  }
+
+  // 카드 상단 고정/해제 토글
+  async function togglePin(card: Card) {
+    const key = card.key;
+    const next = pinnedKeys.includes(key)
+      ? pinnedKeys.filter((k) => k !== key)
+      : [...pinnedKeys, key];
+    setPinnedKeys(next);
+    const res = await fetch("/api/personal/pins", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keys: next }),
+    });
+    if (!res.ok) {
+      await showAlert("고정 저장에 실패했어요. 다시 로그인해야 할 수 있어요.");
       router.refresh();
     }
   }
@@ -282,16 +357,8 @@ export function PersonalBoardView({
   const isEnglishName = /^[a-zA-Z0-9\s]+$/.test(profileName);
   const particleText = isEnglishName ? profileName.toUpperCase() : profileName;
 
-  // 편집 모드에서 카드·헤더가 아닌 빈 영역을 탭하면 편집 종료 (모달 없이, iOS 홈 화면처럼)
-  function handleBoardClick(e: MouseEvent) {
-    if (!showCatManage || showForm) return;
-    const t = e.target as HTMLElement;
-    if (t.closest("[data-card]") || t.closest("header")) return;
-    setShowCatManage(false);
-  }
-
   return (
-    <main className={styles.page} onClick={handleBoardClick}>
+    <main className={styles.page}>
       <header className={styles.header}>
         <ParticleText text={particleText} />
         <div className={styles.headActions}>
@@ -418,12 +485,64 @@ export function PersonalBoardView({
         )}
 
         {!filtering && (
-          <p className={styles.tip}>편집 모드: 카드를 드래그해 순서 변경(모바일은 길게 눌러 이동), 좌상단 −로 삭제/숨김. 빈 곳을 탭하거나 완료를 누르면 끝나요.</p>
+          <p className={styles.tip}>편집 모드: 카드를 드래그해 순서 변경(같은 카테고리 안에서만, 모바일은 길게 눌러 이동), 좌상단 −로 삭제/숨김, 우하단 핀으로 상단 고정. 빈 곳을 탭하거나 완료를 누르면 끝나요.</p>
         )}
       </header>
 
       {visible.length === 0 ? (
         <p className={styles.empty}>표시할 즐겨찾기가 없어요.</p>
+      ) : sectioned ? (
+        // "전체": 고정 섹션 + 카테고리 블록. 각 섹션이 개별 정렬 컨텍스트(블록 안에서만 이동).
+        <DndContext id={dndId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <div className={styles.sections}>
+            {sections.pinned.length > 0 && (
+              <section className={styles.section}>
+                <h2 className={styles.sectionHead}>
+                  <Pin size={14} strokeWidth={2} fill="currentColor" /> 고정
+                </h2>
+                <SortableContext items={sections.pinned.map((c) => c.key)} strategy={rectSortingStrategy}>
+                  <div className={styles.grid}>
+                    {sections.pinned.map((c) => (
+                      <PersonalSortableCard
+                        key={c.key}
+                        card={c}
+                        draggable={!filtering}
+                        isEditing={showCatManage}
+                        pinned
+                        categoryName={labelFor(c)}
+                        onEdit={(card) => { setEditing(card); setShowForm(true); }}
+                        onDelete={removeBookmark}
+                        onTogglePin={togglePin}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </section>
+            )}
+            {sections.groups.map((g) => (
+              <section key={g.key} className={styles.section}>
+                <h2 className={styles.sectionHead}>{g.label ?? "미분류"}</h2>
+                <SortableContext items={g.cards.map((c) => c.key)} strategy={rectSortingStrategy}>
+                  <div className={styles.grid}>
+                    {g.cards.map((c) => (
+                      <PersonalSortableCard
+                        key={c.key}
+                        card={c}
+                        draggable={!filtering}
+                        isEditing={showCatManage}
+                        pinned={false}
+                        categoryName={undefined}
+                        onEdit={(card) => { setEditing(card); setShowForm(true); }}
+                        onDelete={removeBookmark}
+                        onTogglePin={togglePin}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </section>
+            ))}
+          </div>
+        </DndContext>
       ) : (
         <DndContext id={dndId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <SortableContext items={visible.map((c) => c.key)} strategy={rectSortingStrategy}>
@@ -434,9 +553,11 @@ export function PersonalBoardView({
                   card={c}
                   draggable={!filtering}
                   isEditing={showCatManage}
+                  pinned={pinnedSet.has(c.key)}
                   categoryName={labelFor(c)}
                   onEdit={(card) => { setEditing(card); setShowForm(true); }}
                   onDelete={removeBookmark}
+                  onTogglePin={togglePin}
                 />
               ))}
             </div>

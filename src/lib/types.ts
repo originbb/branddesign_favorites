@@ -33,6 +33,8 @@ export type Profile = {
   id: number;
   name: string;
   orderKeys: string[];
+  /** "전체" 화면 상단 고정(핀) 카드 키 목록 (핀 순서대로) */
+  pinnedKeys: string[];
   /** 관리자 목록에서만 채워짐: 이 프로필이 가진 개인 북마크 수 */
   bookmarkCount?: number;
 };
