@@ -69,3 +69,30 @@ CREATE TABLE IF NOT EXISTS personal_hidden_categories (
 );
 
 CREATE INDEX IF NOT EXISTS idx_personal_hidden_categories_profile ON personal_hidden_categories(profile_id);
+
+-- 개인 모드: 공유+개인 카테고리를 하나로 합친 통합 탭(카테고리) 순서
+CREATE TABLE IF NOT EXISTS profile_tab_order (
+  profile_id  INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  kind        CHAR(1) NOT NULL CHECK (kind IN ('s', 'p')),  -- s=공유, p=개인
+  item_id     INTEGER NOT NULL,
+  sort_order  INTEGER NOT NULL,
+  PRIMARY KEY (profile_id, kind, item_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_profile_tab_order_profile ON profile_tab_order(profile_id);
+
+-- 개인 모드: 프로필별 공유 카테고리 기본 순서
+CREATE TABLE IF NOT EXISTS profile_category_order (
+  profile_id  INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+  sort_order  INTEGER NOT NULL,
+  PRIMARY KEY (profile_id, category_id)
+);
+
+-- 로그인 시도 제한 / 계정 잠금 상태 (공유 저장소 기반)
+CREATE TABLE IF NOT EXISTS login_guard (
+  key          TEXT NOT NULL PRIMARY KEY,
+  count        INTEGER NOT NULL DEFAULT 0,
+  window_start TIMESTAMPTZ NOT NULL DEFAULT now(),
+  locked_until TIMESTAMPTZ
+);
