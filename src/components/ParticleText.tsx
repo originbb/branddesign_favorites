@@ -86,8 +86,13 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
     // 글자 단위로 폰트 분리: 라틴(영문/숫자)은 Bebas Neue, 국문 등은 Black Han Sans(TitleKR).
     // 한 타이틀에 영문·국문이 섞여 있어도 각 글자를 알맞은 폰트로 렌더한다.
     const bebasFamily = bebasNeue.style.fontFamily;
-    const KR_FAMILY = '"TitleKR"';
-    const familyOf = (latin: boolean) => (latin ? bebasFamily : KR_FAMILY);
+    // 캔버스 렌더용 폰트 스택: 실제 face + 깨끗한 시스템 폴백(sans-serif).
+    // next/font의 metric-adjusted 폴백(size-adjust로 자폭이 보정된 face)은 캔버스에서
+    // 글자를 겹치게 만들어 '깨져 보이는' 원인이 되므로, 캔버스에는 절대 넣지 않는다.
+    const bebasPrimary = bebasFamily.split(",")[0].trim(); // 폴백 말고 실제 Bebas face
+    const bebasDraw = `${bebasPrimary}, sans-serif`;
+    const KR_FAMILY = '"TitleKR", sans-serif';
+    const familyOf = (latin: boolean) => (latin ? bebasDraw : KR_FAMILY);
     const isLatinChar = (ch: string) => ch.charCodeAt(0) <= 0x7f;
     // 같은 스크립트끼리 묶은 세그먼트 배열 생성 (라틴 세그먼트는 대문자화)
     const segments: { text: string; latin: boolean }[] = [];
@@ -401,7 +406,6 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
     // 캔버스에 그려져 글자가 겹쳐 깨진다(특히 안드로이드). → 라틴·국문 실제 face를 명시 로드한다.
     const krText = segments.filter((s) => !s.latin).map((s) => s.text).join("");
     const latinText = segments.filter((s) => s.latin).map((s) => s.text).join("");
-    const bebasPrimary = bebasFamily.split(",")[0].trim(); // 폴백 말고 실제 Bebas face 지정
     const latinSpec = `400 100px ${bebasPrimary}`;
     const krSpec = `400 100px "TitleKR"`;
 
