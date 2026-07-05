@@ -364,6 +364,8 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
     };
 
     let ready = false; // init 완료 여부
+    let disposed = false; // 언마운트 여부(뒤늦은 폰트 콜백이 죽은 캔버스를 건드리는 것 방지)
+    let fontPollTimer: ReturnType<typeof setTimeout> | undefined; // 폰트 준비 폴링 타이머
     const io = new IntersectionObserver((entries) => {
       onScreen = entries[0]?.isIntersecting ?? true;
       if (!ready) return;
@@ -400,17 +402,61 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
     const krText = segments.filter((s) => !s.latin).map((s) => s.text).join("");
     const latinText = segments.filter((s) => s.latin).map((s) => s.text).join("");
     const bebasPrimary = bebasFamily.split(",")[0].trim(); // 폴백 말고 실제 Bebas face 지정
+    const latinSpec = `400 100px ${bebasPrimary}`;
+    const krSpec = `400 100px "TitleKR"`;
+
+    // 실제 face가 '지금 캔버스에 쓸 수 있는' 상태인지 확인한다.
+    // document.fonts.ready / load()가 안드로이드·삼성 인터넷 등에서 다운로드 완료 전에
+    // resolve되는 경우가 있어(→ metric-adjusted 폴백으로 그려져 글자가 겹쳐 깨짐),
+    // check()로 한 번 더 확인해야 폴백 렌더를 확실히 막을 수 있다.
+    const fontsReadyNow = () =>
+      (!latinText || document.fonts.check(latinSpec, latinText)) &&
+      (!hasKorean || document.fonts.check(krSpec, krText));
+
     const fontLoads: Promise<unknown>[] = [];
-    if (latinText) fontLoads.push(document.fonts.load(`400 100px ${bebasPrimary}`, latinText));
-    if (hasKorean) fontLoads.push(document.fonts.load(`400 100px "TitleKR"`, krText));
-    const fontReady = Promise.all(fontLoads).then(() => document.fonts.ready);
-    // 폰트 로드가 실패해도(네트워크/CDN 문제) 시스템 폰트로 반드시 그려지도록 보장
-    fontReady.catch(() => {}).then(() => {
+    if (latinText) fontLoads.push(document.fonts.load(latinSpec, latinText));
+    if (hasKorean) fontLoads.push(document.fonts.load(krSpec, krText));
+    Promise.all(fontLoads).catch(() => {}); // 실제 다운로드 트리거(실패는 무시)
+
+    const drawNow = () => {
       init();
       ready = true;
       if (reduceMotion) drawStatic();
       else if (onScreen && !document.hidden) startLoop();
-    });
+    };
+
+    // 뒤늦게 폰트가 도착하면 그때 정확히 다시 그려 폴백 겹침을 스스로 복구한다.
+    let drewWithRealFont = false;
+    const scheduleLateRedraw = () => {
+      Promise.all(fontLoads).catch(() => {}).then(() => document.fonts.ready).then(() => {
+        if (disposed || drewWithRealFont || !fontsReadyNow()) return;
+        drewWithRealFont = true;
+        init();
+        if (reduceMotion) drawStatic();
+      });
+    };
+
+    // 폰트가 실제로 준비될 때까지 폴링(최대 MAX_WAIT_MS). 준비되면 그때 정확히 그린다.
+    // 끝내 준비가 안 되면 빈 화면 방지를 위해 폴백으로 한 번 그리고, 도착 시 재드로잉.
+    const POLL_MS = 100;
+    const MAX_WAIT_MS = 2500;
+    let waited = 0;
+    const tryDraw = () => {
+      if (disposed) return;
+      if (fontsReadyNow()) {
+        drewWithRealFont = true;
+        drawNow();
+        return;
+      }
+      if (waited >= MAX_WAIT_MS) {
+        if (!ready) drawNow(); // 폴백으로라도 표시(빈 화면 방지)
+        scheduleLateRedraw();  // 폰트 도착 시 정확히 재드로잉
+        return;
+      }
+      waited += POLL_MS;
+      fontPollTimer = setTimeout(tryDraw, POLL_MS);
+    };
+    tryDraw();
 
     let resizeTimer: NodeJS.Timeout;
     const handleResize = () => {
@@ -439,8 +485,10 @@ export function ParticleText({ text, subtitle }: { text: string; subtitle?: stri
       document.removeEventListener("visibilitychange", onVisibility);
       io.disconnect();
       stopLoop();
+      disposed = true;
       clearTimeout(resizeTimer);
       clearTimeout(scrollIdleTimer);
+      clearTimeout(fontPollTimer);
     };
   }, [text, subtitle, resolvedTheme]);
 
