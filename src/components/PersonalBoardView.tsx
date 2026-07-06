@@ -354,6 +354,29 @@ export function PersonalBoardView({
     }
   }
 
+  async function renameSelf() {
+    const current = await showPrompt("현재 PIN을 입력하세요.");
+    if (!current) return;
+    const name = await showPrompt("새로운 이름을 입력하세요.", profileName);
+    if (name === null) return;
+    const trimmed = name.trim();
+    if (trimmed.length < 1 || trimmed.length > 20) {
+      await showAlert("이름은 1~20자로 입력해야 합니다.");
+      return;
+    }
+    const res = await fetch("/api/profile/rename", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPin: current, name: trimmed }),
+    });
+    if (res.ok) {
+      await showAlert("이름이 변경되었습니다.");
+      router.refresh();
+    } else {
+      const data = await res.json().catch(() => null);
+      await showAlert(data?.error ?? "이름 변경에 실패했습니다.");
+    }
+  }
+
   const isEnglishName = /^[a-zA-Z0-9\s]+$/.test(profileName);
   const particleText = isEnglishName ? profileName.toUpperCase() : profileName;
 
@@ -375,6 +398,8 @@ export function PersonalBoardView({
               <>
                 <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
                 <div className={styles.menu} role="menu">
+                  <button type="button" role="menuitem" className={styles.menuItem}
+                    onClick={() => { setMenuOpen(false); renameSelf(); }}>이름 변경</button>
                   <button type="button" role="menuitem" className={styles.menuItem}
                     onClick={() => { setMenuOpen(false); changePin(); }}>PIN 변경</button>
                   <button type="button" role="menuitem" className={styles.menuItem}
