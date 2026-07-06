@@ -56,21 +56,6 @@ export function PersonalBoardView({
   useEffect(() => { setUnified(initialUnified); }, [initialUnified]);
   useEffect(() => { setPinnedKeys(initialPinnedKeys); }, [initialPinnedKeys]);
 
-  // 편집 모드에서 카드·헤더·버튼·다이얼로그가 아닌 빈 곳을 누르면 편집 종료.
-  // (문서 전체에서 감지 → PC의 콘텐츠 바깥 여백까지 포함해 어디를 눌러도 동작)
-  useEffect(() => {
-    if (!showCatManage || showForm) return;
-    function onDocPointerDown(e: PointerEvent) {
-      const t = e.target as HTMLElement | null;
-      if (!t) return;
-      if (menuOpen) return; // 계정 메뉴가 열려 있으면 그쪽 처리에 맡김
-      if (document.querySelector('[role="dialog"]')) return; // 확인/입력 다이얼로그 열림
-      if (t.closest("[data-card]") || t.closest("header") || t.closest("button")) return;
-      setShowCatManage(false);
-    }
-    document.addEventListener("pointerdown", onDocPointerDown);
-    return () => document.removeEventListener("pointerdown", onDocPointerDown);
-  }, [showCatManage, showForm, menuOpen]);
   useEffect(() => { setHiddenShared(initialHiddenShared); }, [initialHiddenShared]);
   useEffect(() => { setHiddenCategories(initialHiddenCategories); }, [initialHiddenCategories]);
 
@@ -396,7 +381,7 @@ export function PersonalBoardView({
             </button>
             {menuOpen && (
               <>
-                <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
+                <div className={styles.menuBackdrop} onPointerDown={() => setMenuOpen(false)} />
                 <div className={styles.menu} role="menu">
                   <button type="button" role="menuitem" className={styles.menuItem}
                     onClick={() => { setMenuOpen(false); renameSelf(); }}>이름 변경</button>
@@ -510,7 +495,7 @@ export function PersonalBoardView({
         )}
 
         {!filtering && (
-          <p className={styles.tip}>편집 모드: 카드를 드래그해 순서 변경(같은 카테고리 안에서만, 모바일은 길게 눌러 이동), 좌상단 −로 삭제/숨김, 우하단 핀으로 상단 고정. 빈 곳을 탭하거나 완료를 누르면 끝나요.</p>
+          <p className={styles.tip}>편집 모드: 카드를 드래그해 순서 변경(같은 카테고리 안에서만, 모바일은 길게 눌러 이동), 좌상단 −로 삭제/숨김, 우하단 핀으로 상단 고정. 완료를 누르면 끝나요.</p>
         )}
       </header>
 

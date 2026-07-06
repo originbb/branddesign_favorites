@@ -176,6 +176,7 @@
   position: fixed;
   inset: 0;
   z-index: 40;
+  cursor: pointer; /* iOS Safari가 div의 탭 이벤트를 확실히 발생시키도록 */
 }
 
 .menu {
