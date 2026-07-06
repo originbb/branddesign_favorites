@@ -19,7 +19,8 @@
 
 .modal {
   position: relative;
-  background-color: var(--surface);
+  /* --surface는 그라디언트라 background-color엔 무효(→투명) → 불투명 면으로 칠함 */
+  background: var(--surface-solid);
   color: var(--text);
   border: 1px solid var(--border);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
@@ -87,12 +88,12 @@
 }
 
 .cancelBtn {
-  background-color: rgba(118, 118, 128, 0.08);
-  color: var(--text-dim);
+  background-color: rgba(118, 118, 128, 0.16);
+  color: var(--text);
 }
 
 .cancelBtn:hover {
-  background-color: rgba(118, 118, 128, 0.12);
+  background-color: rgba(118, 118, 128, 0.24);
   color: var(--text);
 }
 
