@@ -1,12 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDialog } from "./DialogProvider";
+import { useViewportOverlay } from "./useViewportOverlay";
 import styles from "./LoginModal.module.css";
 
 export function LoginModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const { showAlert } = useDialog();
+  const overlayRef = useRef<HTMLDivElement>(null);
+  useViewportOverlay(overlayRef, true);
   const [mode, setMode] = useState<"login" | "changePin">("login");
   const [name, setName] = useState("");
   const [pin, setPin] = useState("");
@@ -71,7 +74,7 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div ref={overlayRef} className={styles.overlay} onClick={onClose}>
       <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
         {mode === "login" ? (
           <>

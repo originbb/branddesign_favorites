@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useRef, useEffect } from "react";
+import { useViewportOverlay } from "./useViewportOverlay";
 import styles from "./DialogProvider.module.css";
 
 type DialogOptions = {
@@ -30,6 +31,8 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
   const cancelBtnRef = useRef<HTMLButtonElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  useViewportOverlay(overlayRef, !!dialog);
 
   const showAlert = (message: string) => {
     return new Promise<void>((resolve) => {
@@ -125,7 +128,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
     <DialogContext.Provider value={{ showAlert, showConfirm, showPrompt }}>
       {children}
       {dialog && (
-        <div className={styles.overlay} onKeyDown={handleTab}>
+        <div ref={overlayRef} className={styles.overlay} onKeyDown={handleTab}>
           {/* Backdrop */}
           <div 
             className={styles.backdrop} 
