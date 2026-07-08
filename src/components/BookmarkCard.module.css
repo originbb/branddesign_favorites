@@ -134,13 +134,12 @@
 }
 
 .domain {
-  font-size: 11px; 
-  color: var(--text-dim); 
+  font-size: 11px;
+  color: var(--text-dim);
   margin: 3px 0 0;
-  white-space: nowrap; 
-  overflow: hidden; 
+  white-space: nowrap;
+  overflow: hidden;
   text-overflow: ellipsis;
-  opacity: 0.7;
 }
 
 /* 모바일: 카드 여백을 살짝 줄여 한 화면에 더 많은 항목이 보이도록(가독성은 유지) */
