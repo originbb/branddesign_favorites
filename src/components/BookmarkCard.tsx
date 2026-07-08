@@ -28,23 +28,26 @@ export function BookmarkCard({
 
   const unavatarUrl = `https://unavatar.io/${hostname}?fallback=false`;
   const googleUrl = `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostname}&size=128`;
-  const ddgUrl = `https://icons.duckduckgo.com/ip3/${hostname}.ico`;
 
   // Custom favicon (if different from our generated ones)
   const customSrc = bookmark.faviconUrl && !bookmark.faviconUrl.includes("google.com/s2") && !bookmark.faviconUrl.includes("t3.gstatic.com")
     ? bookmark.faviconUrl
     : unavatarUrl;
 
-  // 파비콘 후보를 순서대로 시도한다. 앞의 조회 서비스(unavatar/google/ddg)는 유명 도메인은
-  // 잘 주지만 니치·신규 서브도메인은 인덱스에 없어 실패한다(unavatar는 임의 사이트가 이제 유료).
-  // 그래서 마지막에 사이트가 실제로 서빙하는 파비콘(/favicon.ico, /favicon.svg)을 직접 시도한다.
-  // <img> 는 크로스오리진 이미지를 그대로 렌더하므로 CORS·서버코드 없이 동작한다.
+  // 파비콘 후보를 순서대로 시도한다.
+  // 핵심 함정: Google faviconV2 는 파비콘이 없는 도메인에도 16x16 "일반 지구본"을 유효한
+  // 이미지로 반환한다. 브라우저 <img> 는 HTTP 상태와 무관하게 디코딩 가능한 이미지면 그냥
+  // 렌더하므로(onError 안 남) Google 을 앞에 두면 실제 파비콘이 있어도 지구본에서 멈춘다.
+  //  → (1) 사이트가 실제 서빙하는 파비콘(/favicon.ico, /favicon.svg)을 Google 보다 먼저 시도.
+  //        (이 앱은 사내·니치 사이트가 많아 사이트 원본이 Google 인덱스보다 정확하다.)
+  //     (2) Google 이 준 게 16x16 지구본이면(onLoad 에서 크기로 판별) 실패로 간주하고
+  //        컬러 이니셜 폴백으로 넘긴다. 진짜 Google 파비콘은 항상 32px 이상이라 안전.
+  //     <img> 는 크로스오리진 이미지를 그대로 렌더하므로 CORS·서버코드 없이 동작한다.
   const sources = [
     customSrc,
-    googleUrl,
-    ddgUrl,
     `https://${hostname}/favicon.ico`,
     `https://${hostname}/favicon.svg`,
+    googleUrl,
   ];
   const initialSrc = sources[0];
 
@@ -57,6 +60,17 @@ export function BookmarkCard({
     setErrorCount(0);
     setFailed(false);
   }, [initialSrc]);
+
+  // 다음 후보로 진행. 후보가 없으면 컬러 이니셜 폴백으로.
+  const advance = () => {
+    const next = errorCount + 1;
+    if (next < sources.length) {
+      setImgSrc(sources[next]);
+      setErrorCount(next);
+    } else {
+      setFailed(true);
+    }
+  };
 
   return (
     <a
@@ -80,13 +94,12 @@ export function BookmarkCard({
           src={imgSrc}
           loading="lazy"
           decoding="async"
-          onError={() => {
-            const next = errorCount + 1;
-            if (next < sources.length) {
-              setImgSrc(sources[next]);
-              setErrorCount(next);
-            } else {
-              setFailed(true);
+          onError={advance}
+          onLoad={(e) => {
+            // Google 이 파비콘 없는 도메인에 반환하는 16x16 일반 지구본을 거른다.
+            // (사이트 자체 파비콘/unavatar 의 작은 이미지는 진짜이므로 Google 소스일 때만 적용)
+            if (imgSrc === googleUrl && e.currentTarget.naturalWidth <= 16) {
+              advance();
             }
           }}
           alt=""
