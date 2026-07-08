@@ -2,14 +2,14 @@
   width: 100%;
   /* 높이를 가로폭에 비례시켜, 화면이 좁아지면 타이틀과 위아래 여백이 함께 줄어들게 함 */
   aspect-ratio: 1072 / 340;
-  max-height: 340px; /* 넓은 화면 상한 */
+  max-height: 240px; /* 넓은 화면 상한 (타이틀이 화면 상단을 과하게 차지하지 않게) */
   min-height: 100px; /* 아주 좁은 화면 하한 */
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 30px 0; /* 타이틀 위아래 바깥 여백 */
+  margin: 18px 0; /* 타이틀 위아래 바깥 여백 */
   user-select: none;
 }
 
