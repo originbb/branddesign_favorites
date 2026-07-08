@@ -29,20 +29,22 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   padding: 6px;
   border-radius: 99px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  /* 스크롤 시 카드가 아래로 지나가도 '떠 있는 레이어'로 또렷이 보이도록
+     배경 불투명도와 그림자를 강화 (겹침 시 콘텐츠와 뒤섞이지 않게) */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06);
   transition: var(--transition);
 }
 
 [data-theme='dark'] .headActions {
-  background: rgba(30, 30, 32, 0.85);
+  background: rgba(30, 30, 32, 0.92);
   border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .addBtn {
@@ -286,10 +288,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-dim);
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   padding-left: 2px;
 }
 
