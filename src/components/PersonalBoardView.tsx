@@ -494,8 +494,8 @@ export function PersonalBoardView({
           </div>
         )}
 
-        {!filtering && (
-          <p className={styles.tip}>편집 모드: 카드를 드래그해 순서 변경(같은 카테고리 안에서만, 모바일은 길게 눌러 이동), 좌상단 −로 삭제/숨김, 우하단 핀으로 상단 고정. 완료를 누르면 끝나요.</p>
+        {showCatManage && !filtering && (
+          <p className={styles.tip}>카드를 드래그해 순서 변경(같은 카테고리 안에서만, 모바일은 길게 눌러 이동), 좌상단 −로 삭제/숨김, 우하단 핀으로 상단 고정. 완료를 누르면 끝나요.</p>
         )}
       </header>
 
