@@ -69,14 +69,24 @@
   box-shadow: var(--shadow);
 }
 
+/* 외부 파비콘(늑대·문자·로고 등 제각각)을 폴백 이니셜과 같은 라운드 사각
+   프레임에 담아 카드 전체 톤을 통일. box-sizing:border-box라 padding은
+   32px 안쪽으로 들어가 로고가 프레임에 살짝 여백을 두고 놓인다. */
 .favicon {
-  width: 32px; 
-  height: 32px; 
-  border-radius: 8px; 
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   flex-shrink: 0;
-  background: transparent;
+  padding: 3px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
   object-fit: contain;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='dark'] .favicon {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 /* 파비콘 로드가 모두 실패했을 때, 빈 칸/레이아웃 밀림 대신 도메인 첫 글자 박스로 대체.
