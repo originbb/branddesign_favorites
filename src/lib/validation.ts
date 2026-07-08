@@ -31,6 +31,13 @@ export function domainOf(url: string): string {
 export function faviconUrl(url: string): string | null {
   try {
     const u = new URL(url);
+    if (
+      u.hostname.includes("konabase") ||
+      u.hostname.includes("konawiki") ||
+      u.hostname.includes("konaway")
+    ) {
+      return "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0Ij48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIGZpbGw9IiNGRjNDNDIiLz48dGV4dCB4PSIzMiIgeT0iMzMiIGZpbGw9IiNmZmZmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQyIiBmb250LXdlaWdodD0iNzAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCI+SzwvdGV4dD48L3N2Zz4=";
+    }
     return `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${u.hostname}&size=128`;
   } catch {
     return null;
