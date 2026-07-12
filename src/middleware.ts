@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_COOKIE } from "@/lib/cookies";
+import { ADMIN_COOKIE, PROFILE_COOKIE } from "@/lib/cookies";
 
 const ADMIN_COOKIE_MESSAGE = "admin:v1";
 
@@ -57,6 +57,11 @@ export async function middleware(request: NextRequest) {
     if (!cookieToken || !headerToken || cookieToken !== headerToken) {
       return NextResponse.json({ error: 'CSRF token mismatch or missing' }, { status: 403 });
     }
+  }
+
+  // 로그인 사용자가 루트 경로(/)에 접근하면 내부적으로 /my-board 로 Rewrite
+  if (pathname === "/" && request.cookies.has(PROFILE_COOKIE)) {
+    response = NextResponse.rewrite(new URL("/my-board", request.url));
   }
 
   // 모든 브라우저 요청(페이지, API 등)에 대해 csrf_token 쿠키 발급
