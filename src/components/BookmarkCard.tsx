@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, type CSSProperties } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import type { Bookmark } from "@/lib/types";
 import { domainOf } from "@/lib/validation";
 import styles from "./BookmarkCard.module.css";
@@ -13,6 +13,12 @@ function faviconHue(hostname: string): number {
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return h % 360;
 }
+
+// 외부 파비콘을 직접 받을 수 없는 사이트(CORP: same-origin 등으로 핫링크 차단)의 아이콘은
+// public/favicons 에 사본을 두고 최우선으로 쓴다. unavatar 무료 한도(25회)에도 영향받지 않는다.
+const LOCAL_FAVICONS: Record<string, string> = {
+  "expense-tracker-2q60.onrender.com": "/favicons/expense-tracker.jpg",
+};
 
 export function BookmarkCard({
   bookmark,
@@ -43,7 +49,9 @@ export function BookmarkCard({
   //     (2) Google 이 준 게 16x16 지구본이면(onLoad 에서 크기로 판별) 실패로 간주하고
   //        컬러 이니셜 폴백으로 넘긴다. 진짜 Google 파비콘은 항상 32px 이상이라 안전.
   //     <img> 는 크로스오리진 이미지를 그대로 렌더하므로 CORS·서버코드 없이 동작한다.
+  const localSrc = LOCAL_FAVICONS[hostname];
   const sources = [
+    ...(localSrc ? [localSrc] : []),
     customSrc,
     `https://${hostname}/favicon.ico`,
     `https://${hostname}/favicon.svg`,
@@ -54,6 +62,7 @@ export function BookmarkCard({
   const [imgSrc, setImgSrc] = useState(initialSrc);
   const [errorCount, setErrorCount] = useState(0);
   const [failed, setFailed] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     setImgSrc(initialSrc);
@@ -71,6 +80,15 @@ export function BookmarkCard({
       setFailed(true);
     }
   };
+
+  // SSG 로 내려온 <img> 는 하이드레이션 전에 이미 로드에 실패할 수 있고, 그 error 이벤트는
+  // React 핸들러가 붙기 전이라 유실된다 → 깨진 아이콘에 멈춘다. 마운트 후 현재 이미지가
+  // 이미 실패 상태(complete && naturalWidth === 0)면 직접 다음 후보로 넘긴다.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth === 0) advance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imgSrc]);
 
   return (
     <a
@@ -90,6 +108,7 @@ export function BookmarkCard({
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          ref={imgRef}
           className={styles.favicon}
           src={imgSrc}
           loading="lazy"
